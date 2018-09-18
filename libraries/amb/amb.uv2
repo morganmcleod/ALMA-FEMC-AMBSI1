@@ -593,7 +593,7 @@ Options 6,0,0  // Target 'amb ambsi small'
  lClasses ()
  lSect ()
   OPTDL (S166.DLL)()(D167.DLL)(-p167CR)(S166.DLL)()(T167.DLL)(-p167CR)
-  OPTDBG 501,0,()()()()()()()()()() ()()()()
+  OPTDBG 502,0,()()()()()()()()()() ()()()()
 EndOpt
 
 Options 1,1,2  // File 'spi_pic.c'

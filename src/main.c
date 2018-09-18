@@ -5,7 +5,7 @@
     Created: 2004/08/24 13:24:53 by avaccari
 
     <b> CVS informations: </b><br>
-    \$Id: main.c,v 1.14 2006/12/11 16:11:10 avaccari Exp $
+    \$Id: main.c,v 1.14.2.1 2009/04/17 13:14:14 avaccari Exp $
 
 	This is the firmware to be loaded into the AMBSI1 to allow the AMBSI1 to work as a
 	bridge between the CAN bus contained in the AMB and the ARCOM embedded controller
@@ -93,13 +93,22 @@
 /* Version Info */
 #define VERSION_MAJOR 01	//!< Major Version
 #define VERSION_MINOR 00	//!< Minor Revision
-#define VERSION_PATCH 00	//!< Patch Level
+#define VERSION_PATCH 01	//!< Patch Level
 
 /*
    Revision History
 
-   2006-12-11
-   Version	01.00.00	First working release.	
+2009-04-14  001.000.001	    (Ver_01_00_01(ALMA-40_00_00_00-75_35_25_00_B_ICD).H86)
+    Patch to First Official Release.
+    This is the first stable working release.
+    This version is tagged Ver_01_00_01(ALMA-40_00_00_00-75_35_25_00_B_ICD).
+    Compiled using Revision 1.1.2 of the amb library
+
+2006-12-11  001.000.000	    (Ver_01_00_00(ALMA-40_00_00_00-75_35_25_00_B_ICD).H86)
+    First Official Release.
+    This is the first stable working release.
+    This version is tagged Ver_01_00_00(ALMA-40_00_00_00-75_35_25_00_B_ICD).
+    Compiled using Revision 1.1.1 of the amb library
 
 */
 

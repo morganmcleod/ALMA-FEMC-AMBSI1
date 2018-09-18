@@ -1,5 +1,13 @@
 RELEASE/REVISION HISTORY
 
+2009-xx-xx  xxx.xxx.xxx
+
+2009-04-14  001.000.001	    (Ver_01_00_01(ALMA-40_00_00_00-75_35_25_00_B_ICD).H86)
+    Patch to First Official Release.
+    This is the first stable working release.
+    This version is tagged Ver_01_00_01(ALMA-40_00_00_00-75_35_25_00_B_ICD).
+    Compiled using Revision 1.1.2 of the amb library
+
 2006-12-11  001.000.000	    (Ver_01_00_00(ALMA-40_00_00_00-75_35_25_00_B_ICD).H86)
     First Official Release.
     This is the first stable working release.

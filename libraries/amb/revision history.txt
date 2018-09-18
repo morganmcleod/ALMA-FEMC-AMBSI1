@@ -1,4 +1,15 @@
 --- Revision history ---
+2008-03-05	   Release:	Version 1.1.2
+		   Release tag: Ver_1_1_2
+
+		   Patch release.
+Version 01.01.02 - Released as Ver_1_1_2
+        	   Patch by Andrea Vaccari - NRAO NTC
+		   Changed code to assure that any RCA is not serviced more than once in
+		   case the register addresses overlap
+	
+		   ---o---
+
 2004-11-18	   Release:	Version 1.1.1
 		   Release tag:	Ver_1_1_1
 

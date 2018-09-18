@@ -7,6 +7,7 @@ Target (Monitor), 0x0002 // Tools: '166/167'
 Group (Source)
 Group (Startup)
 Group (Libraries)
+Group (Text)
 
 File 1,1,<.\main.c><main.c>
 File 2,2,<.\Start167.a66><Start167.a66>
@@ -14,6 +15,7 @@ File 3,4,<..\..\libraries\ds1820\ds1820ambsismall.LIB><ds1820ambsismall.LIB>
 File 3,4,<..\..\libraries\amb\ambambsismall.LIB><ambambsismall.LIB>
 File 3,4,<..\..\libraries\amb\ambambsis.LIB><ambambsis.LIB>
 File 3,4,<..\..\libraries\ds1820\ds1820ambsis.LIB><ds1820ambsis.LIB>
+File 4,5,<.\EDM Releases\Release History.txt><Release History.txt>
 
 
 Options 1,0,0  // Target 'AMBSI Flash Small'
