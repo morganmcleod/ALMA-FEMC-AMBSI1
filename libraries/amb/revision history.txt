@@ -1,0 +1,40 @@
+--- Revision history ---
+2004-11-18	   Release:	Version 1.1.1
+		   Release tag:	Ver_1_1_1
+
+		   pATCH release.
+
+Version 01.01.01 - Released as Ver_1_1_1
+		   Patch by Andrea Vaccari - NRAO NTC
+		   Added the function "amb_unregister_last_function" declaration in the
+		   amb.h file.
+
+		   ---o---
+
+2004-11-18	   Release:	Version 1.1.0
+		   Release tag:	Ver_1_1_0
+
+		   Minor change release.
+
+Version 01.01.00 - Released as Ver_1_1_0
+		   Minor change by Andrea Vaccari - NRAO NTC
+		   Added the function "amb_unregister_last_function".
+		   If any callback function has been registered, this function will
+                   unregister the last registered function.
+
+		   ---o---
+
+2004-11-18	   Release:     	Version 1.0.1
+		   Release tag:	Ver_1_0_1
+
+             	   This release is the first official release.
+
+Version 01.00.01 - Released as Ver_1_0_1
+		   Patch by Andrea Vaccari - NRAO Tucson
+      		   This patch modified the location of all the global variables
+                   and moved them from external memory to internal memory (IDATA).
+		   The result was an increased speed of execution.
+
+		   ---o---
+
+Version 01.00.00 - Original Version developed by Mick Brooks - NRAO Tucson
