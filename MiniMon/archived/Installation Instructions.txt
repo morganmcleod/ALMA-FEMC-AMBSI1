@@ -1,0 +1,49 @@
+2012-06-20
+
+Minimon Installation Instructions
+
+01 - extract the 'minimon.zip' file in a temporary directory (in this instructions 'temp')
+
+02 - unzip 'minimon2.2.3.zip' (in this instructions it is assumed that it is extracted in 'temp' as well rather than another subdirectory)
+
+03 - run the 'setup.exe' file created during the extraction
+
+04 - choose 'OK'
+
+05 - choose the installation directory (if you choose a non existing directory, you'll be asked - in German - if you want to create it)
+
+06 - then click the icon displaying a terminal and 5.25" floppies
+
+07 - you'll be asked about the name of the program group to create. After you're done, 'Weiter' will move to the next step
+
+08 - Installation should proceed at this point
+
+09 - you might be asked if you want to replace existing COM and DLL files. In doubt, answer 'Ja'.
+
+10 - open the destination directory where you just installed minimon (choosen at step 05)
+
+11 - Copy the following files from the directory 'temp' where you extracted 'minimon.zip' to the destination directory:
+     external_ambsi.ini
+     flash_ambsi.ini
+     test_ambsi.ini
+
+12 - Copy the following files from the subdirectory 'temp\Extra_Scripts' to the subdirectory 'SCRIPTS' in the destination directory:
+     test_flash.scm
+     test_ram.scm
+
+13 - Copy the entire subdirectory 'A29F010_AMBSI' from the 'temp' directory to the 'Driver' subdirectory in the destination directory.
+
+14 - Start minimon
+
+15 - Select 'Settings...' from the 'Interface' menu
+
+16 - Modify the settings as follows:
+     Port:      (the RS232 port that you will be using to talk to the AMBSI1)
+     Baudrate:  57600
+     Parity:    none
+     Data Bits: 8 Bit
+     Stop Bits: 1
+     KLINE:     (not checked)
+
+17 - you can now delete the 'temp' directory created at step 01 if you wish
+

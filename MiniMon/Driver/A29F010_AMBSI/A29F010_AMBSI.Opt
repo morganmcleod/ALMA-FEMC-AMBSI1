@@ -1,0 +1,43 @@
+### uVision2 Project, (C) Keil Software
+### Do not modify !
+
+ cExt (*.c)
+ aExt (*.a*; *.src)
+ oExt (*.obj)
+ lExt (*.lib)
+ tExt (*.txt)
+ pExt (*.plm)
+ DaveTm { 0,0,0,0,0,0,0,0 }
+
+Target (Target 1), 0x0002 // Tools: '166/167'
+GRPOPT 1,(Source Group 1),1,0,0
+
+OPTFFF 1,1,2,352321538,0,130,132,0,<.\A29F010_AMBSI.A66><A29F010_AMBSI.A66> { 44,0,0,0,0,0,0,0,1,0,0,0,255,255,255,255,255,255,255,255,252,255,255,255,233,255,255,255,1,0,0,0,18,0,0,0,180,3,0,0,145,3,0,0 }
+
+ExtF <.\A29F010_AMBSI.EQU> 1,13,0,{ 44,0,0,0,0,0,0,0,1,0,0,0,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,103,1,0,0,45,1,0,0,194,4,0,0,60,3,0,0 }
+
+TARGOPT 1, (Target 1)
+  OPT166 20000000,0,1,0,1,1
+  OPT166MMM { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }
+  OPT166ICA { 0,0,232,0,0,0,8,0,0 }
+  OPT166IRO { 0,0,0,0,0,0,0,0,0 }
+  OPT166XRA { 0,0,224,0,0,0,8,0,0 }
+  OPT166IRA { 0,0,246,0,0,0,8,0,0 }
+  OPTTT 1,1,1,0
+  OPTHX 0,65535,0,0,64768
+  OPTLX 120,65,8,<.\>
+  OPTOX 16
+  OPTLT 1,1,1,0,1,1,0,1,0,0,0
+  OPTXL 1,1,1,1,1,1,1,0,0
+  OPTFL 1,0,1
+  OPTBL 0,(Product Overview)<DATASHTS\INFINEON\P167CR.PDF>
+  OPTBL 1,(Data Sheet)<DATASHTS\INFINEON\D167CR.PDF>
+  OPTBL 2,(User Manual)<DATASHTS\INFINEON\M167.PDF>
+  OPTBL 3,(Instruction Set Manual)<DATASHTS\INFINEON\C166ISM.PDF>
+  OPTDL (S166.DLL)()(D167.DLL)(-p167CR)(S166.DLL)()(T167.DLL)(-p167CR)
+  OPTDBG 510,0,()()()()()()()()()() ()()()()
+  OPTDF 0x0
+  OPTLE <>
+  OPTLC <>
+EndOpt
+

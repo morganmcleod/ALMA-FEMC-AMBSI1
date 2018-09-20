@@ -1,0 +1,1 @@
+This directory contains preference files and documents which were previously applicable to programming the AMBSI1.   They may no longer be complete and correct but are retained in case they are needed for problem solving.

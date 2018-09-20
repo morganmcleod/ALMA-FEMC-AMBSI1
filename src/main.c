@@ -1,12 +1,6 @@
 /*!	\file	main.c
 	\brief	AMBSI1 firmware code
 
-    <b> File informations: </b><br>
-    Created: 2004/08/24 13:24:53 by avaccari
-
-    <b> CVS informations: </b><br>
-    \$Id: main.c,v 1.14.2.1 2009/04/17 13:14:14 avaccari Exp $
-
 	This is the firmware to be loaded into the AMBSI1 to allow the AMBSI1 to work as a
 	bridge between the CAN bus contained in the AMB and the ARCOM embedded controller
 	handling the front end hardware.
@@ -92,11 +86,14 @@
 
 /* Version Info */
 #define VERSION_MAJOR 01	//!< Major Version
-#define VERSION_MINOR 00	//!< Minor Revision
-#define VERSION_PATCH 01	//!< Patch Level
+#define VERSION_MINOR 01	//!< Minor Revision
+#define VERSION_PATCH 00	//!< Patch Level
 
 /*
    Revision History
+
+2018-09-14  001.001.000
+Working on fixing communication with ARCOM and timeout behavior.
 
 2009-04-14  001.000.001	    (Ver_01_00_01(ALMA-40_00_00_00-75_35_25_00_B_ICD).H86)
     Patch to First Official Release.
@@ -118,8 +115,8 @@
 #include <intrins.h>
 
 /* include library interface */
-#include "..\..\libraries\amb\amb.h"
-#include "..\..\libraries\ds1820\ds1820.h"
+#include "..\libraries\amb\amb.h"
+#include "..\libraries\ds1820\ds1820.h"
 
 /* Set aside memory for the callbacks in the AMB library */
 static CALLBACK_STRUCT idata cb_memory[7];
@@ -445,7 +442,7 @@ int controlMsg(CAN_MSG_TYPE *message){
 
 	/* Send RCA */
 	for(timer=MAX_TIMEOUT;timer&&DSTROBE;timer--);	// Wait for Data Strobe to go low
-	P7 = message->relative_address;	// Put data on port
+	P7 = (uword) (message->relative_address);	// Put data on port
 	WAIT = 1;	// Acknowledge with Wait going high
 	WAIT = 0; 	/* Wait down as quick as possible for next message.
 				   Any wait state will keep wait high too long and make the ARCOM believe it is an
@@ -456,7 +453,7 @@ int controlMsg(CAN_MSG_TYPE *message){
 	#else
 		_nop_();			// One nop to wait for following data strobe to go low
 	#endif /* FULL_HANDSHAKE */
-	P7 = message->relative_address>>8; 	// Put data on port
+	P7 = (uword) (message->relative_address>>8); 	// Put data on port
 	WAIT = 1;	// Acknowledge with Wait going high
 	WAIT = 0; 	/* Wait down as quick as possible for next message.
 				   Any wait state will keep wait high too long and make the ARCOM believe it is an
@@ -467,7 +464,7 @@ int controlMsg(CAN_MSG_TYPE *message){
 	#else
 		_nop_();			// One nop to wait for following data strobe to go low
 	#endif /* FULL_HANDSHAKE */
-	P7 = message->relative_address>>16; 	// Put data on port
+	P7 = (uword) (message->relative_address>>16); 	// Put data on port
 	WAIT = 1;	// Acknowledge with Wait going high
 	WAIT = 0;	/* Wait down as quick as possible for next message.
 				   Any wait state will keep wait high too long and make the ARCOM believe it is an
@@ -478,7 +475,7 @@ int controlMsg(CAN_MSG_TYPE *message){
 	#else
 		_nop_();			// One nop to wait for following data strobe to go low
 	#endif /* FULL_HANDSHAKE */
-	P7 = message->relative_address>>24; 	// Put data on port
+	P7 = (uword) (message->relative_address>>24); 	// Put data on port
 	WAIT = 1;	// Acknowledge with Wait going high
 	WAIT = 0;	/* Wait down as quick as possible for next message.
 				   Any wait state will keep wait high too long and make the ARCOM believe it is an
@@ -552,7 +549,7 @@ int monitorMsg(CAN_MSG_TYPE *message) {
 
 	/* Send RCA */
 	for(timer=MAX_TIMEOUT;timer&&DSTROBE;timer--);	// Wait for Data Strobe to go low
-	P7 = message->relative_address;	// Put data on port
+	P7 = (uword) (message->relative_address);	// Put data on port
 	WAIT = 1;	// Acknowledge with Wait going high
 	WAIT = 0; 	/* Wait down as quick as possible for next message.
 				   Any wait state will keep wait high too long and make the ARCOM believe it is an
@@ -563,7 +560,7 @@ int monitorMsg(CAN_MSG_TYPE *message) {
 	#else
 		_nop_();			// One nop to wait for following data strobe to go low
 	#endif /* FULL_HANDSHAKE */
-	P7 = message->relative_address>>8; 	// Put data on port
+	P7 = (uword) (message->relative_address>>8); 	// Put data on port
 	WAIT = 1;	// Acknowledge with Wait going high
 	WAIT = 0;	/* Wait down as quick as possible for next message.
 				   Any wait state will keep wait high too long and make the ARCOM believe it is an
@@ -574,7 +571,7 @@ int monitorMsg(CAN_MSG_TYPE *message) {
 	#else
 		_nop_();			// One nop to wait for following data strobe to go low
 	#endif /* FULL_HANDSHAKE */
-	P7 = message->relative_address>>16; 	// Put data on port
+	P7 = (uword) (message->relative_address>>16); 	// Put data on port
 	WAIT = 1;	// Acknowledge with Wait going high
 	WAIT = 0;	/* Wait down as quick as possible for next message.
 				   Any wait state will keep wait high too long and make the ARCOM believe it is an
@@ -585,7 +582,7 @@ int monitorMsg(CAN_MSG_TYPE *message) {
 	#else
 		_nop_();			// One nop to wait for following data strobe to go low
 	#endif /* FULL_HANDSHAKE */
-	P7 = message->relative_address>>24; 	// Put data on port
+	P7 = (uword) (message->relative_address>>24); 	// Put data on port
 	WAIT = 1;	// Acknowledge with Wait going high
 	WAIT = 0;	/* Wait down as quick as possible for next message.
 				   Any wait state will keep wait high too long and make the ARCOM believe it is an
@@ -608,7 +605,7 @@ int monitorMsg(CAN_MSG_TYPE *message) {
 
 	/* Receive monitor payload size */
 	for(timer=MAX_TIMEOUT;timer&&DSTROBE;timer--);	// Wait for Data Strobe to go low
-	message->len=P7;	// Read data from port
+	message->len = (ubyte) P7;	// Read data from port
 	WAIT = 1;	// Acknowledge with Wait going high
 	WAIT = 0;	/* Wait down as quick as possible for next message.
 				   Any wait state will keep wait high too long and make the ARCOM believe it is an
@@ -622,7 +619,7 @@ int monitorMsg(CAN_MSG_TYPE *message) {
 			#else
 				// The for cycle is slow enough for following data strobe to go low
 			#endif /* FULL_HANDSHAKE */
-			message->data[counter]=P7;	// Read data from port
+			message->data[counter] = (ubyte) P7;	// Read data from port
 			WAIT = 1;	// Acknowledge with Wait going high
 			WAIT = 0;	/* Wait down as quick as possible for next message.
 						   Any wait state will keep wait high too long and make the ARCOM believe it is an

@@ -1,6 +1,7 @@
 RELEASE/REVISION HISTORY
 
-2009-xx-xx  xxx.xxx.xxx
+2018-09-18  001.001.000
+    Working on resolving communication timeouts.
 
 2009-04-14  001.000.001	    (Ver_01_00_01(ALMA-40_00_00_00-75_35_25_00_B_ICD).H86)
     Patch to First Official Release.

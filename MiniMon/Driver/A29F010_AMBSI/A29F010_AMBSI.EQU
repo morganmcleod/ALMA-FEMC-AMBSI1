@@ -1,0 +1,39 @@
+
+;---------------------  Function Codes ----------------------------
+
+FC_PROG			EQU	000h	; Program Flash
+FC_ERASE		EQU	001h	; Erase Flash
+FC_SETTIMING		EQU	003h	; Set Timing
+FC_GETSTATE		EQU	006h	; Get State
+FC_LOCK			EQU	010h	; Lock Flash bank
+FC_UNLOCK		EQU	011h	; Unlock Flash bank
+FC_PROTECT		EQU	020h	; Protect entire Flash
+FC_UNPROTECT		EQU	021h	; Unprotect Flash
+
+
+;--------------------- Error Values -----------------------------
+
+E_NOERROR		EQU	000h	; No error
+E_UNKNOWN_FC		EQU	001h	; Unknown function code
+E_VERIFY		EQU	002h	; Error on data written to Flash
+E_PTOUT			EQU	003h	; Timeout while programming flash
+E_ETOUT			EQU	004h	; Timeout while erasing flash
+
+E_PROG_NO_VPP		EQU	010h	; No VPP while programming
+E_PROG_FAILED		EQU	011h	; Programming failed
+E_PROG_VPP_NOT_CONST	EQU	012h	; VPP not constant while programming
+
+E_INVALID_BLOCKSIZE	EQU	01Bh	; Invalid blocksize
+E_INVALID_DEST_ADDR	EQU	01Ch	; Invalid destination address
+
+E_ERASE_NO_VPP		EQU	030h	; No VPP while erasing
+E_ERASE_FAILED		EQU	031h	; Erasing failed
+E_ERASE_VPP_NOT_CONST	EQU	032h	; VPP not constant while erasing
+
+E_INVALID_BANK		EQU	033h	; Invalid bank number
+E_BANK_LOCKED		EQU	034h	; Bank locked
+E_FLASH_PROTECTED	EQU	035h	; Flash protected
+
+
+
+

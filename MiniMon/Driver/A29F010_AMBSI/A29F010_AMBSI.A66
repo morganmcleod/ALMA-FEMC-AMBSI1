@@ -1,0 +1,229 @@
+;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;
+;	Revised version of the A29F010 Flash driver
+;
+; Register used:
+;
+; RO
+; R1
+; R2		Temp in PROGRAM and Selected Section in ERASE
+; R3		Temp
+; R4		Even/odd chip ID
+; RL5		Verified byte
+; RH5		Copied byte
+; R6
+; R7
+; R8		Command code
+; R9		Transferred byte count
+; R10,R11	24-bit source address
+; R12
+; R13,R14	24-bit destination address
+; R15		Returned error code
+;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+$SEGMENTED					; Segemented memory mode
+$CASE						; Symbols case sensitive
+$INCLUDE (A29F010_AMBSI.EQU)
+
+	NAME	MINIMON
+OPBANK	REGDEF  R0-R15
+	ASSUME	DPP3:system
+
+StackData0	SECTION DATA SYSSTACK		; Data Section to reserve 
+						; Stack-Memory  
+	DSB	20H				; 32 Byte 
+
+StackData0	ENDS				; End of Dummy-Section
+
+
+DriverCode0	SECTION CODE PUBLIC 'CDRIVER'
+
+DriverProc 	PROC FAR
+
+
+Cmd1:	CMP	R8,#(FC_PROG)	
+	JMP	cc_NE,Cmd2
+
+	; PROGRAM FLASH
+
+	MOV	R15,#(E_VERIFY)	; Assume Failure (Error on data written to flash)
+
+	CMP	R9,#0		; While transfer count
+	JMP	cc_UC,CPrTst	
+
+CPrLp:  MOV	R4,R13		; R4 contains Chip (0 or 1)
+	AND	R4,#1
+	MOV	R2,R14		; R2 contains A16-A23 (needed for CSequ1)
+
+	EXTS	R11,#1		; read data source 
+	MOVB	RH5,[R10]
+
+	ADD	R10,#1		; increment source pointer
+	ADDC	R11,#0
+
+	CALLR	CSequ1		; Call common command sequence
+
+	MOV	R3,#0555h << 1	; Command: PROGRAM (write A0h to x0555h)
+	ADD	R3,R4
+	MOVB	RL5,#0A0h
+
+	EXTS	R2,#1		; write the command
+	MOVB	[R3],RL5
+
+	EXTS	R2,#1		; write data to destination
+	MOVB	[R13],RH5
+
+	MOV	R3,#0D0h	; Initialise timeout counter (Wait ~500us)
+
+CPSLp:	EXTS	R2,#1		; wait until flash write is done
+	MOVB	RL5,[R13]
+
+	XORB	RL5,RH5
+	ANDB	RL5,#080h
+	JMP	cc_Z,CPrDn
+	CMPD1	R3,#0		; Check timeout counter
+	JMP	cc_NZ,CPSLp
+
+	MOV	R15,#(E_PTOUT)	; ERROR: Timeout while programming
+
+	RETS
+	
+CPrDn:	EXTS	R2,#1		; verify copied byte
+	MOVB	RL5,[R13]
+
+	CMPB	RH5,RL5
+	JMP	cc_NE,CPrEx
+
+	ADD	R13,#1
+	ADDC	R14,#0
+
+	SUB	R9,#1		; decrement length counter
+
+CPrTst:	JMP	cc_NZ,CPrLp	; is it done?
+
+	MOV	R15,#(E_NOERROR); success
+
+CPrEx:	RETS
+
+Cmd2:	CMP	R8,#(FC_ERASE)
+	JMP	cc_NE,Cmd3
+
+	; ERASE FLASH
+
+	CALLR	CSectS		; Select Section
+
+	MOV	R4,#0		; R4 contains Chip# (0 or 1)
+
+CEr1:	CALLR	CSequ1		; Call common command sequence
+
+	MOV	R3,#0555h << 1	; Command: ERASE (write 80h to x0555h)
+	ADD	R3,R4
+	MOVB	RL5,#080h
+
+	EXTS	R2,#1
+	MOVB	[R3],RL5
+
+	CALLR	CSequ1
+
+	MOV	R3,#0555h << 1	; Command: ERASE (write 10h to x0555h)
+	ADD	R3,R4
+	MOVB	RL5,#010h
+
+	EXTS	R2,#1
+	MOVB	[R3],RL5
+
+	ADD	R4,#1		; Erase the odd-addressed chip
+	CMP	R4,#1
+	JMP	cc_EQ,CEr1
+
+	MOV	R0,#00000h	; Initialise timeout counter (Wait ~6.5 sec)
+	MOV	R1,#00017h
+
+CErLp:	SUB	R3,#1		; Select the even-addressed chip
+
+	EXTS	R2,#1		; read erase status
+	MOVB	RL5,[R3]
+
+	ADD	R3,#1		; Select the odd-addressed chip
+
+	EXTS	R2,#1		; read erase status
+	MOVB	RH5,[R3]
+	
+	AND	R5,#8080h
+	CMP	R5,#8080h	; check if complete
+	JMP	cc_Z,CErDn	
+	SUB	R0,#01h
+	SUBC	R1,#00h
+	JMP	cc_NZ,CErLp
+	CMP	R0,#00h
+	JMP	cc_NZ,CErLp
+
+	MOV	R15,#(E_ETOUT)	; ERROR: Timeout while erasing
+
+CErDn:	RETS	
+
+	; UNKNOWN COMMAND
+
+Cmd3:	MOV	R15,#(E_UNKNOWN_FC)
+
+	RETS
+
+DriverProc	ENDP
+
+	; COMMON COMMAND SEQUENCE
+
+CSequ1		PROC NEAR
+
+	MOV	R3,#0555h << 1	; 1st unlock: write AAh to x0555h
+	ADD	R3,R4
+	MOVB	RL5,#0AAh
+
+	EXTS	R2,#1
+	MOVB	[R3],RL5
+
+	MOV	R3,#02AAh << 1	; 2nd unlock: write 55h to x02AAh
+	ADD	R3,R4
+	MOVB	RL5,#055h
+
+	EXTS	R2,#1
+	MOVB	[R3],RL5	
+	RET
+
+CSequ1 		ENDP
+
+	; SELECT SECTION
+
+CSectS 		PROC NEAR
+
+	CMP	R14,#0
+	JMP	cc_NE,CSect1
+	MOV	R1,#0
+	MOV	R2,#0
+	RET
+
+CSect1:	CMP	R14,#1
+	JMP	cc_NE,CSect2
+	MOV	R1,#0
+	MOV	R2,#1
+	RET
+
+CSect2:	CMP	R14,#2
+	JMP	cc_NE,CSect3
+	MOV	R1,#0
+	MOV	R2,#2
+	RET
+
+CSect3:	CMP	R14,#3
+	JMP	cc_NE,CSect4
+	MOV	R1,#0
+	MOV	R2,#3
+	RET
+
+CSect4:	MOV	R2,#0
+	RET
+
+CSectS 		ENDP
+
+DriverCode0	ENDS
+
+		END

@@ -1,0 +1,1 @@
+This directory contains Intel hex (.h86) files which are ready to load onto the AMBSI1 C167 microcontroller.
