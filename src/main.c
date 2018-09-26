@@ -25,32 +25,16 @@
 
 */
 /* Defines */
-//! Debug mode
-/*! It implements a fully handshaken communication with a longer timeout. This is necessary if the
-    ARCOM board is in debug mode to allow for the long time necessary to print all the messages to
-	the ARCOM console. */
-#define	DEBUG
 
 //! Full handshake mode
-/*! Fully handshaken communication with the ARCOM board (slow but failproof). This is automatically
-    implemented if in debug mode. */
-#ifdef DEBUG
-	#define FULL_HANDSHAKE
-#else
-	// #define FULL_HANDSHAKE	// Comment this to disable full handshake when not in debug mode
-#endif /* DEBUG */
+//! Fully handshaken communication with the ARCOM board (slow but failproof).
+#define FULL_HANDSHAKE
 
 //! Longest timeout allowed
 /*! Every time during communication the AMBSI1 is waiting for an aknowledment by the ARCOM board a 
 	timeout is implemented to avoid hung-ups. The timeout is a counter that counts from \p MAX_TIMEOUT
 	down to zero unless an aknowledgment is received. */
-	
-#ifdef DEBUG
-	#define MAX_TIMEOUT	0xFFFFFF // Still to be measured for time length
-#else
-	#define MAX_TIMEOUT 0xFFFF // About 70 ms. Give time to the ARCOM to print debug info on the screen
-#endif /* DEBUG */
-
+#define MAX_TIMEOUT 0xFFFF // About 70 ms. Give time to the ARCOM to print debug info on the screen
 
 //! Is the firmware using the 48 ms pulse?
 /*! Defines if the 48ms pulse is used to trigger the correponding interrupt.
@@ -59,7 +43,7 @@
 
 	\note	To be able to use the 48 ms pulse, it is necessary to program the
 	 	  	xilinx chip to allow the incoming pulse to be passed throught. */
-#define USE_48MS	0	
+// #define USE_48MS
 
 #define MAX_CAN_MSG_PAYLOAD			8		// Max CAN message payload size. Used to determine if error occurred
 
@@ -74,41 +58,21 @@
                 ARCOM firmware to reflect the new value and vice-versa.
                 This adress is used to get informations about the firmware
 				version. */
-#define BASE_SPECIAL_MONITOR_RCA    0x20000
-#define GET_AMBSI1_VERSION_INFO     BASE_SPECIAL_MONITOR_RCA            //!< \b BASE+0x00 -> AMBSI1 dedicated message to get firmware version. It should never be received from this software
-#define GET_SETUP_INFO              (GET_AMBSI1_VERSION_INFO+0x01)      //!< \b BASE+0x01 -> AMBSI1 dedicated message to get setup info. It should never be received from this software
-#define GET_ARCOM_VERSION_INFO      (GET_SETUP_INFO+0x01)               //!< \b BASE+0x02 -> Information about the ARCOM Pegasus firware version. This is the first addressable special RCA (Don't change the offset of this RCA)
-#define GET_SPECIAL_MONITOR_RCAS    (GET_ARCOM_VERSION_INFO+0x01)       //!< \b BASE+0x03 -> Information about the special monitor RCA range (Don't change the offset of this RCA)
-#define GET_SPECIAL_CONTROL_RCAS    (GET_SPECIAL_MONITOR_RCAS+0x01)     //!< \b BASE+0x04 -> Information about the special control RCA range (Don't change the offset of this RCA)
-#define GET_MONITOR_RCAS            (GET_SPECIAL_CONTROL_RCAS+0x01)     //!< \b BASE+0x05 -> Information about the monitor RCA range (Don't change the offset of this RCA)
-#define GET_CONTROL_RCAS            (GET_MONITOR_RCAS+0x01)             //!< \b BASE+0x06 -> Information about the control RCA range (Don't change the offset of this RCA)
-
+#define BASE_SPECIAL_MONITOR_RCA    0x20000L
+#define GET_AMBSI1_VERSION_INFO     0x20000L    //!< \b BASE+0x00 -> AMBSI1 dedicated message to get firmware version. It should never be received from this software
+#define GET_SETUP_INFO              0x20001L    //!< \b BASE+0x01 -> AMBSI1 dedicated message to get setup info. It should never be received from this software
+#define GET_ARCOM_VERSION_INFO      0x20002L	//!< \b BASE+0x02 -> Information about the ARCOM Pegasus firware version. This is the first addressable special RCA (Don't change the offset of this RCA)
+#define GET_SPECIAL_MONITOR_RCAS    0x20003L	//!< \b BASE+0x03 -> Information about the special monitor RCA range (Don't change the offset of this RCA)
+#define GET_SPECIAL_CONTROL_RCAS    0x20004L	//!< \b BASE+0x04 -> Information about the special control RCA range (Don't change the offset of this RCA)
+#define GET_MONITOR_RCAS            0x20005L	//!< \b BASE+0x05 -> Information about the monitor RCA range (Don't change the offset of this RCA)
+#define GET_CONTROL_RCAS            0x20006L	//!< \b BASE+0x06 -> Information about the control RCA range (Don't change the offset of this RCA)
+#define GET_MON_TIMERS1_RCA         0x20010L    //!< \b BASE+0x10 -> Monitor timing 
+#define GET_MON_TIMERS2_RCA         0x20011L    //!< \b BASE+0x11 -> Monitor timing 
 
 /* Version Info */
 #define VERSION_MAJOR 01	//!< Major Version
 #define VERSION_MINOR 01	//!< Minor Revision
 #define VERSION_PATCH 00	//!< Patch Level
-
-/*
-   Revision History
-
-2018-09-14  001.001.000
-Working on fixing communication with ARCOM and timeout behavior.
-
-2009-04-14  001.000.001	    (Ver_01_00_01(ALMA-40_00_00_00-75_35_25_00_B_ICD).H86)
-    Patch to First Official Release.
-    This is the first stable working release.
-    This version is tagged Ver_01_00_01(ALMA-40_00_00_00-75_35_25_00_B_ICD).
-    Compiled using Revision 1.1.2 of the amb library
-
-2006-12-11  001.000.000	    (Ver_01_00_00(ALMA-40_00_00_00-75_35_25_00_B_ICD).H86)
-    First Official Release.
-    This is the first stable working release.
-    This version is tagged Ver_01_00_00(ALMA-40_00_00_00-75_35_25_00_B_ICD).
-    Compiled using Revision 1.1.1 of the amb library
-
-*/
-
 
 /* Uses serial port */
 #include <reg167.h>
@@ -127,6 +91,8 @@ int controlMsg(CAN_MSG_TYPE *message);  	//!< Called to handle CAN control messa
 int monitorMsg(CAN_MSG_TYPE *message);  	//!< Called to handle CAN monitor messages 
 int getSetupInfo(CAN_MSG_TYPE *message);  	//!< Called to get the AMBSI1 <-> ARCOM link/setup information 
 int getVersionInfo(CAN_MSG_TYPE *message);	//!< Called to get firmware version informations 
+int getMonTimers1(CAN_MSG_TYPE *message);    //!< Retrieve last monitor message timers
+int getMonTimers2(CAN_MSG_TYPE *message);    //!< Retrieve last monitor message timers
 
 /* A global for the last read temperature */
 static ubyte idata ambient_temp_data[4];
@@ -142,6 +108,19 @@ sbit  INT				= P2^7;
 sbit  SELECT			= P2^10;
 sbit  INIT				= P2^5;
 
+/* Separate timers for each phase of monitor transaction */
+static unsigned int monTimer1;
+static unsigned int monTimer2;
+static unsigned int monTimer3;
+static unsigned int monTimer4;
+static unsigned int monTimer5;
+static unsigned int monTimer6;
+static unsigned int monTimer7;
+
+/* Macro to implement FULL_HANDSHAKE */
+// Wait for Data Strobe to go low
+#define IMPL_HANDSHAKE(TIMER) for(TIMER = MAX_TIMEOUT; TIMER && DSTROBE; TIMER--) {}
+
 /* RCAs address ranges */
 static unsigned long idata lowestMonitorRCA,highestMonitorRCA,
 						   lowestControlRCA,highestControlRCA,
@@ -155,19 +134,17 @@ static CAN_MSG_TYPE idata myCANMessage;
 static bit idata ready;			// is the communication between the ARCOM and AMBSI ready?
 static bit idata initialized;	// have the RCAs been initialized?
 
-
-
 //! MAIN
 /*! Takes care of initializing the AMBSI1, the CAN subrutine and globally enables interrupts. */ 
 void main(void) {
-	if(USE_48MS){
-		// Setup the CAPCOM2 unit to receive the 48ms pulse from the Xilinx
+	#ifdef USE_48MS
+	  // Setup the CAPCOM2 unit to receive the 48ms pulse from the Xilinx
 		P8&=0xFE; // Set value of P8.0 to 0
 		DP8&=0xFE; // Set INPUT direction for P8.0
 		CCM4&=0xFFF0; // Clear setup for CCMOD16
 		CCM4|=0x0001; // Set CCMOD16 to trigger on rising edge
 		CC16IC=0x0078; // Interrupt: ILVL=14, GLVL=0;
-	}
+	#endif // USE_48MS
 
 	/* Make sure that external bus control signal buffer is disabled */
 	DP4 |= 0x01;
@@ -196,6 +173,13 @@ void main(void) {
 	/* Register callbacks for CAN events (RCA -> 0x20001) */
 	if (amb_register_function(GET_SETUP_INFO, GET_SETUP_INFO, getSetupInfo) != 0)
 		return;
+
+    /* Register callbacks for monitor timers (RCA -> 0x20010, 0x20011) */
+    //if (amb_register_function(GET_MON_TIMERS1_RCA, GET_MON_TIMERS1_RCA, getMonTimers1) != 0)
+    //    return;
+
+    //if (amb_register_function(GET_MON_TIMERS2_RCA, GET_MON_TIMERS2_RCA, getMonTimers2) != 0)
+    //    return;
 
 	/* globally enable interrupts */
   	amb_start();
@@ -228,7 +212,31 @@ int getVersionInfo(CAN_MSG_TYPE *message){
 	return 0;
 }
 
+int getMonTimers1(CAN_MSG_TYPE *message) {
+    message->data[1] = (unsigned char) (monTimer1);
+    message->data[0] = (unsigned char) (monTimer1 >> 8);
+    message->data[3] = (unsigned char) (monTimer2);
+    message->data[2] = (unsigned char) (monTimer2 >> 8);
+    message->data[5] = (unsigned char) (monTimer3);
+    message->data[4] = (unsigned char) (monTimer3 >> 8);
+    message->data[7] = (unsigned char) (monTimer4);
+    message->data[6] = (unsigned char) (monTimer4 >> 8);
+    message->len=8;
+    return 0;
+}
 
+int getMonTimers2(CAN_MSG_TYPE *message) {
+    message->data[1] = (unsigned char) (monTimer5);
+    message->data[0] = (unsigned char) (monTimer5 >> 8);
+    message->data[3] = (unsigned char) (monTimer6);
+    message->data[2] = (unsigned char) (monTimer6 >> 8);
+    message->data[5] = (unsigned char) (monTimer7);
+    message->data[4] = (unsigned char) (monTimer7 >> 8);
+    message->data[7] = (unsigned char) (MAX_TIMEOUT);
+    message->data[6] = (unsigned char) (MAX_TIMEOUT >> 8);
+    message->len=8;
+    return 0;
+}
 
 /*! This function get the RCAs info from the ARCOM board and register the appropriate CAN functions.
 	
@@ -424,13 +432,7 @@ void received_48ms(void) interrupt 0x30{
 int controlMsg(CAN_MSG_TYPE *message){
 
 	unsigned char counter;
-
-	/* Depending on the mode the varibale timer is declare and has different sizes */
-	#ifdef DEBUG
-		unsigned long timer;
-	#else
-		unsigned int timer;
-	#endif /* DEBUG */
+	unsigned int timer;
 
 	if(message->dirn==CAN_MONITOR){
 		monitorMsg(message);
@@ -441,40 +443,39 @@ int controlMsg(CAN_MSG_TYPE *message){
 	INT = 1;
 
 	/* Send RCA */
-	for(timer=MAX_TIMEOUT;timer&&DSTROBE;timer--);	// Wait for Data Strobe to go low
+    IMPL_HANDSHAKE(timer)
 	P7 = (uword) (message->relative_address);	// Put data on port
 	WAIT = 1;	// Acknowledge with Wait going high
 	WAIT = 0; 	/* Wait down as quick as possible for next message.
 				   Any wait state will keep wait high too long and make the ARCOM believe it is an
 				   aknowledgment to the following data strobe. */
-
 	#ifdef FULL_HANDSHAKE
-		for(timer=MAX_TIMEOUT;timer&&DSTROBE;timer--);	// Wait for Data Strobe to go low
+		IMPL_HANDSHAKE(timer)
 	#else
-		_nop_();			// One nop to wait for following data strobe to go low
-	#endif /* FULL_HANDSHAKE */
+		_nop_();  // One nop to wait for following data strobe to go low
+	#endif
 	P7 = (uword) (message->relative_address>>8); 	// Put data on port
 	WAIT = 1;	// Acknowledge with Wait going high
 	WAIT = 0; 	/* Wait down as quick as possible for next message.
 				   Any wait state will keep wait high too long and make the ARCOM believe it is an
 				   aknowledgment to the following data strobe. */
 
-	#ifdef FULL_HANDSHAKE
-		for(timer=MAX_TIMEOUT;timer&&DSTROBE;timer--);	// Wait for Data Strobe to go low
-	#else
-		_nop_();			// One nop to wait for following data strobe to go low
-	#endif /* FULL_HANDSHAKE */
+    #ifdef FULL_HANDSHAKE
+        IMPL_HANDSHAKE(timer)
+    #else
+        _nop_();  // One nop to wait for following data strobe to go low
+    #endif
 	P7 = (uword) (message->relative_address>>16); 	// Put data on port
 	WAIT = 1;	// Acknowledge with Wait going high
 	WAIT = 0;	/* Wait down as quick as possible for next message.
 				   Any wait state will keep wait high too long and make the ARCOM believe it is an
 				   aknowledgment to the following data strobe. */
 
-	#ifdef FULL_HANDSHAKE
-		for(timer=MAX_TIMEOUT;timer&&DSTROBE;timer--);	// Wait for Data Strobe to go low
-	#else
-		_nop_();			// One nop to wait for following data strobe to go low
-	#endif /* FULL_HANDSHAKE */
+    #ifdef FULL_HANDSHAKE
+        IMPL_HANDSHAKE(timer)
+    #else
+        _nop_();  // One nop to wait for following data strobe to go low
+    #endif
 	P7 = (uword) (message->relative_address>>24); 	// Put data on port
 	WAIT = 1;	// Acknowledge with Wait going high
 	WAIT = 0;	/* Wait down as quick as possible for next message.
@@ -482,11 +483,11 @@ int controlMsg(CAN_MSG_TYPE *message){
 				   aknowledgment to the following data strobe. */
 
 	/* Send payload size (0 -> monitor message) */
-	#ifdef FULL_HANDSHAKE
-		for(timer=MAX_TIMEOUT;timer&&DSTROBE;timer--);	// Wait for Data Strobe to go low
-	#else
-		_nop_();			// One nop to wait for following data strobe to go low
-	#endif /* FULL_HANDSHAKE */
+    #ifdef FULL_HANDSHAKE
+        IMPL_HANDSHAKE(timer)
+    #else
+        _nop_();  // One nop to wait for following data strobe to go low
+    #endif
 	P7 = message->len;  // Put data on port (0 -> monitor message)
 	WAIT = 1;	// Acknowledge with Wait going high
 	WAIT = 0;	/* Wait down as quick as possible for next message.
@@ -494,11 +495,11 @@ int controlMsg(CAN_MSG_TYPE *message){
 				   aknowledgment to the following data strobe. */
 
 	for(counter=0;counter<message->len;counter++){
-		#ifdef FULL_HANDSHAKE
-			for(timer=MAX_TIMEOUT;timer&&DSTROBE;timer--);	// Wait for Data Strobe to go low
-		#else
-			// The for cycle is slow enough for following data strobe to go low
-		#endif /* FULL_HANDSHAKE */
+        #ifdef FULL_HANDSHAKE
+            IMPL_HANDSHAKE(timer)
+        #else
+            // The for cycle is slow enough for following data strobe to go low
+        #endif
 		P7 = message->data[counter];	// Put data on port (0 -> monitor message)
 		WAIT = 1;	// Acknowledge with Wait going high
 		WAIT = 0; 	/* Wait down as quick as possible for next message.
@@ -518,9 +519,6 @@ int controlMsg(CAN_MSG_TYPE *message){
 	It will start communication with the ARCOM board triggering the parallel port
 	interrupt and the sending the CAN message information to the ARCOM board.
 
-	In case of timeouts while talking to the ARCOM board, a message with all 8
-	bytes of payload set to 0xFF will be returned instead of the required monitor data.
-
 	Since a CAN monitor request does require response within 150us, this function
 	will then wait for data to come back from the ARCOM board.
 
@@ -532,13 +530,6 @@ int monitorMsg(CAN_MSG_TYPE *message) {
 
 	unsigned char counter;
 
-	/* Depending on the mode the varibale timer is declare and has different sizes */
-	#ifdef DEBUG
-		unsigned long timer;
-	#else
-		unsigned int timer;
-	#endif /* DEBUG */
-
 	if(message->dirn==CAN_CONTROL){
 		controlMsg(message);
 		return 0;
@@ -548,40 +539,40 @@ int monitorMsg(CAN_MSG_TYPE *message) {
 	INT = 1;
 
 	/* Send RCA */
-	for(timer=MAX_TIMEOUT;timer&&DSTROBE;timer--);	// Wait for Data Strobe to go low
+	IMPL_HANDSHAKE(monTimer1)
 	P7 = (uword) (message->relative_address);	// Put data on port
 	WAIT = 1;	// Acknowledge with Wait going high
 	WAIT = 0; 	/* Wait down as quick as possible for next message.
 				   Any wait state will keep wait high too long and make the ARCOM believe it is an
 				   aknowledgment to the following data strobe. */
 
-	#ifdef FULL_HANDSHAKE
-		for(timer=MAX_TIMEOUT;timer&&DSTROBE;timer--);	// Wait for Data Strobe to go low
-	#else
-		_nop_();			// One nop to wait for following data strobe to go low
-	#endif /* FULL_HANDSHAKE */
+    #ifdef FULL_HANDSHAKE
+        IMPL_HANDSHAKE(monTimer2)
+    #else
+        _nop_();  // One nop to wait for following data strobe to go low
+    #endif
 	P7 = (uword) (message->relative_address>>8); 	// Put data on port
 	WAIT = 1;	// Acknowledge with Wait going high
 	WAIT = 0;	/* Wait down as quick as possible for next message.
 				   Any wait state will keep wait high too long and make the ARCOM believe it is an
 				   aknowledgment to the following data strobe. */
 
-	#ifdef FULL_HANDSHAKE
-		for(timer=MAX_TIMEOUT;timer&&DSTROBE;timer--);	// Wait for Data Strobe to go low
-	#else
-		_nop_();			// One nop to wait for following data strobe to go low
-	#endif /* FULL_HANDSHAKE */
+    #ifdef FULL_HANDSHAKE
+        IMPL_HANDSHAKE(monTimer3)
+    #else
+        _nop_();  // One nop to wait for following data strobe to go low
+    #endif
 	P7 = (uword) (message->relative_address>>16); 	// Put data on port
 	WAIT = 1;	// Acknowledge with Wait going high
 	WAIT = 0;	/* Wait down as quick as possible for next message.
 				   Any wait state will keep wait high too long and make the ARCOM believe it is an
 				   aknowledgment to the following data strobe. */
 
-	#ifdef FULL_HANDSHAKE
-		for(timer=MAX_TIMEOUT;timer&&DSTROBE;timer--);	// Wait for Data Strobe to go low
-	#else
-		_nop_();			// One nop to wait for following data strobe to go low
-	#endif /* FULL_HANDSHAKE */
+    #ifdef FULL_HANDSHAKE
+        IMPL_HANDSHAKE(monTimer4)
+    #else
+        _nop_();  // One nop to wait for following data strobe to go low
+    #endif
 	P7 = (uword) (message->relative_address>>24); 	// Put data on port
 	WAIT = 1;	// Acknowledge with Wait going high
 	WAIT = 0;	/* Wait down as quick as possible for next message.
@@ -589,11 +580,11 @@ int monitorMsg(CAN_MSG_TYPE *message) {
 				   aknowledgment to the following data strobe. */
 
 	/* Send payload size (0 -> monitor message) */
-	#ifdef FULL_HANDSHAKE
-		for(timer=MAX_TIMEOUT;timer&&DSTROBE;timer--);	// Wait for Data Strobe to go low
-	#else
-		_nop_();			// One nop to wait for following data strobe to go low
-	#endif /* FULL_HANDSHAKE */
+    #ifdef FULL_HANDSHAKE
+        IMPL_HANDSHAKE(monTimer5)
+    #else
+        _nop_();  // One nop to wait for following data strobe to go low
+    #endif
 	P7 = message->len;  // Put data on port (0 -> monitor message)
 	WAIT = 1;	// Acknowledge with Wait going high
 	WAIT = 0;	/* Wait down as quick as possible for next message.
@@ -604,7 +595,7 @@ int monitorMsg(CAN_MSG_TYPE *message) {
 	DP7 = 0x00;
 
 	/* Receive monitor payload size */
-	for(timer=MAX_TIMEOUT;timer&&DSTROBE;timer--);	// Wait for Data Strobe to go low
+	IMPL_HANDSHAKE(monTimer6)
 	message->len = (ubyte) P7;	// Read data from port
 	WAIT = 1;	// Acknowledge with Wait going high
 	WAIT = 0;	/* Wait down as quick as possible for next message.
@@ -614,11 +605,11 @@ int monitorMsg(CAN_MSG_TYPE *message) {
 	/* Get the payload */
 	if(message->len<=MAX_CAN_MSG_PAYLOAD){ // If too many bytes of payload assume error and exit
 		for(counter=0;counter<message->len;counter++){ 
-			#ifdef FULL_HANDSHAKE
-				for(timer=MAX_TIMEOUT;timer&&DSTROBE;timer--);	// Wait for Data Strobe to go low
-			#else
-				// The for cycle is slow enough for following data strobe to go low
-			#endif /* FULL_HANDSHAKE */
+            #ifdef FULL_HANDSHAKE
+                IMPL_HANDSHAKE(monTimer7)
+            #else
+                // The for cycle is slow enough for following data strobe to go low
+            #endif
 			message->data[counter] = (ubyte) P7;	// Read data from port
 			WAIT = 1;	// Acknowledge with Wait going high
 			WAIT = 0;	/* Wait down as quick as possible for next message.
@@ -627,27 +618,21 @@ int monitorMsg(CAN_MSG_TYPE *message) {
 		}
 	}
 
-	/* Set port to transmit data */
-	DP7 = 0xFF;
+	if(!monTimer7 || !monTimer6){
+		// timed out communicating with the ARCOM:
+		// We don't want to send back garbage data (as in earlier versions)
+		// but there is no way to return a value which prevents transmitting the buffer.
+		
+		// Yucky workaround, tell the caller it's actually a control msg:		
+		message->dirn = CAN_CONTROL;
+		message->len=0;
+	} else {
+		// no timeout; Set port to transmit data:
+		DP7 = 0xFF;
+	}
 
 	/* Untrigger interrupt */
 	INT = 0;
-
-	/* If we time out, then send back a monitor message with all 8 bytes of the payload set to 0xFF.
- 	   This will avoid hang ups but still signal that something is wrong. */
-	if(!timer){
-		message->data[0]=0xFF;
-		message->data[1]=0xFF;
-		message->data[2]=0xFF;
-		message->data[3]=0xFF;
-		message->data[4]=0xFF;
-		message->data[5]=0xFF;
-		message->data[6]=0xFF;
-		message->data[7]=0xFF;
-		message->len=8;
-		return -1;
-	}
-
 	return 0;
 }
 

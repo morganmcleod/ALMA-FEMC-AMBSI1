@@ -1,4 +1,4 @@
-L166 LINKER/LOCATER V5.29.2.0                                                           09/18/2018  11:44:32  PAGE 1
+L166 LINKER/LOCATER V5.29.2.0                                                           09/26/2018  12:39:11  PAGE 1
 
 
 L166 LINKER/LOCATER V5.29.2.0, INVOKED BY:
@@ -59,7 +59,7 @@ MEMORY MAP OF MODULE:  ..\objects\fe_mc_small (MAIN)
 
 
 START     STOP      LENGTH    TYPE  RTYP  ALIGN  TGR  GRP  COMB  CLASS   SECTION NAME
-L166 LINKER/LOCATER V5.29.2.0                                                         09/18/2018  11:44:32  PAGE 2
+L166 LINKER/LOCATER V5.29.2.0                                                         09/26/2018  12:39:11  PAGE 2
 
 
 =====================================================================================
@@ -69,18 +69,19 @@ START     STOP      LENGTH    TYPE  RTYP  ALIGN  TGR  GRP  COMB  CLASS   SECTION
 000100H   000103H   000004H   ---   ---   ---    ---  ---  ---   * INTVECTOR TABLE *
 000104H   000223H   000120H   CODE  REL   WORD   ---  ---  PRIV  ICODE   ?C_STARTUP_CODE
 000400H   000407H   000008H   XDATA REL   WORD   ---  ---  GLOB  ---     ?C_INITSEC
-000408H   000419H   000012H   CONST ABS   WORD   ---  ---  PRIV  ---     ?C_CLRMEMSEC
-00041AH   000C05H   0007ECH   CODE  REL   WORD   ---    1  PUBL  NCODE   ?PR?AMB
-000C06H   001367H   000762H   CODE  REL   WORD   ---    1  PUBL  NCODE   ?PR?MAIN
-001368H   001687H   000320H   CODE  REL   WORD   ---    1  PUBL  NCODE   ?PR?DS1820
-001688H   001973H   0002ECH   CODE  REL   WORD   ---    1  PUBL  NCODE   ?C_LIB_CODE
-00F600H   00F679H   00007AH   DATA  REL   WORD   ---    2  PUBL  IDATA0  ?ID0?MAIN
-00F67AH   00F6ABH   000032H   DATA  REL   WORD   ---    2  PUBL  IDATA0  ?ID0?AMB
+000408H   00041DH   000016H   CONST ABS   WORD   ---  ---  PRIV  ---     ?C_CLRMEMSEC
+00041EH   000C09H   0007ECH   CODE  REL   WORD   ---    1  PUBL  NCODE   ?PR?AMB
+000C0AH   001387H   00077EH   CODE  REL   WORD   ---    1  PUBL  NCODE   ?PR?MAIN
+001388H   0016A7H   000320H   CODE  REL   WORD   ---    1  PUBL  NCODE   ?PR?DS1820
+0016A8H   001993H   0002ECH   CODE  REL   WORD   ---    1  PUBL  NCODE   ?C_LIB_CODE
+00F600H   00F679H   00007AH   DATA  REL   WORD   ---    3  PUBL  IDATA0  ?ID0?MAIN
+00F67AH   00F6ABH   000032H   DATA  REL   WORD   ---    3  PUBL  IDATA0  ?ID0?AMB
 00FA00H   00FBFFH   000200H   ---   ---   ---    ---  ---  ---   * SYSTEM STACK *
 00FC00H   00FC1FH   000020H   DATA  ---   BYTE   ---  ---  ---   *REG*   ?C_MAINREGISTERS
 00FD00H.0 00FD00H.1 000000H.2 BIT   REL   BIT    ---  ---  PUBL  BIT0    ?BI0?MAIN
-100000H   1001FFH   000200H   DATA  REL   WORD   ---    3  PUBL  NDATA   ?C_USERSTACK
-100200H   100200H   000001H   DATA  REL   BYTE   ---    3  PUBL  NDATA0  ?ND0?DS1820
+100000H   1001FFH   000200H   DATA  REL   WORD   ---    2  PUBL  NDATA   ?C_USERSTACK
+100200H   10020DH   00000EH   DATA  REL   WORD   ---    2  PUBL  NDATA0  ?ND0?MAIN
+10020EH   10020EH   000001H   DATA  REL   BYTE   ---    2  PUBL  NDATA0  ?ND0?DS1820
 
 
 
@@ -95,11 +96,12 @@ NCODE                                CODE  ---    1  NCODE       ?PR?MAIN
                                                      NCODE       ?C_LIB_CODE
                                                      NCODE       ?PR?FABS
 
-SDATA                                DATA  ---    2  IDATA0      ?ID0?MAIN
-                                                     IDATA0      ?ID0?AMB
-
-NDATA                                DATA  ---    3  NDATA       ?C_USERSTACK
+NDATA                                DATA  ---    2  NDATA0      ?ND0?MAIN
+                                                     NDATA       ?C_USERSTACK
                                                      NDATA0      ?ND0?DS1820
+
+SDATA                                DATA  ---    3  IDATA0      ?ID0?MAIN
+                                                     IDATA0      ?ID0?AMB
 
 
 
@@ -112,25 +114,25 @@ PUBLIC SYMBOLS OF MODULE:  ..\objects\fe_mc_small (MAIN)
       000408H     ?C_CLRMEMSECSTART                VAR   ---  ---     ---
       000033H     ?C_DPPRECISION                   CONST ---  ---     ---
       000406H     ?C_ENDINIT                       VAR   ---  ---     ?C_INITSEC
-      001838H     ?C_FCAST                         LABEL ---  NCODE   ?C_LIB_CODE
-      00168CH     ?C_FPADD                         LABEL ---  NCODE   ?C_LIB_CODE
-      00187EH     ?C_FPCMP                         LABEL ---  NCODE   ?C_LIB_CODE
-      001770H     ?C_FPDIV                         LABEL ---  NCODE   ?C_LIB_CODE
-      001900H     ?C_FPGETOPN                      LABEL ---  NCODE   ?C_LIB_CODE
-      00192EH     ?C_FPINFRSL                      LABEL ---  NCODE   ?C_LIB_CODE
-      001926H     ?C_FPNANRSL                      LABEL ---  NCODE   ?C_LIB_CODE
-L166 LINKER/LOCATER V5.29.2.0                                                         09/18/2018  11:44:32  PAGE 3
+      001858H     ?C_FCAST                         LABEL ---  NCODE   ?C_LIB_CODE
+      0016ACH     ?C_FPADD                         LABEL ---  NCODE   ?C_LIB_CODE
+      00189EH     ?C_FPCMP                         LABEL ---  NCODE   ?C_LIB_CODE
+      001790H     ?C_FPDIV                         LABEL ---  NCODE   ?C_LIB_CODE
+      001920H     ?C_FPGETOPN                      LABEL ---  NCODE   ?C_LIB_CODE
+L166 LINKER/LOCATER V5.29.2.0                                                         09/26/2018  12:39:11  PAGE 3
 
 
-      001964H     ?C_FPNEG                         LABEL ---  NCODE   ?C_LIB_CODE
-      001950H     ?C_FPNOERR                       LABEL ---  NCODE   ?C_LIB_CODE
-      00193AH     ?C_FPOPRSL                       LABEL ---  NCODE   ?C_LIB_CODE
+      00194EH     ?C_FPINFRSL                      LABEL ---  NCODE   ?C_LIB_CODE
+      001946H     ?C_FPNANRSL                      LABEL ---  NCODE   ?C_LIB_CODE
+      001984H     ?C_FPNEG                         LABEL ---  NCODE   ?C_LIB_CODE
+      001970H     ?C_FPNOERR                       LABEL ---  NCODE   ?C_LIB_CODE
+      00195AH     ?C_FPOPRSL                       LABEL ---  NCODE   ?C_LIB_CODE
       000015H     ?C_FPPRECISION                   CONST ---  ---     ---
-      001946H     ?C_FPRSLNR                       LABEL ---  NCODE   ?C_LIB_CODE
-      001688H     ?C_FPSUB                         LABEL ---  NCODE   ?C_LIB_CODE
-      00195EH     ?C_FPUNFRS                       LABEL ---  NCODE   ?C_LIB_CODE
-      0016CAH     ?C_FPXSUB                        LABEL ---  NCODE   ?C_LIB_CODE
-      00195EH     ?C_FPZERRSL                      LABEL ---  NCODE   ?C_LIB_CODE
+      001966H     ?C_FPRSLNR                       LABEL ---  NCODE   ?C_LIB_CODE
+      0016A8H     ?C_FPSUB                         LABEL ---  NCODE   ?C_LIB_CODE
+      00197EH     ?C_FPUNFRS                       LABEL ---  NCODE   ?C_LIB_CODE
+      0016EAH     ?C_FPXSUB                        LABEL ---  NCODE   ?C_LIB_CODE
+      00197EH     ?C_FPZERRSL                      LABEL ---  NCODE   ?C_LIB_CODE
       000400H     ?C_INITSECSTART                  VAR   ---  ---     ---
 000000001FFFC000H ?C_NCONSTBASE                    CONST ---  ---     ---
 000000001FFFFFFFH ?C_NCONSTBASESEG                 CONST ---  ---     ---
@@ -143,29 +145,31 @@ PUBLIC SYMBOLS OF MODULE:  ..\objects\fe_mc_small (MAIN)
       00FA00H     ?C_SYSSTKBOT                     CONST ---  ---     ---
       00FC00H     ?C_SYSSTKTOP                     CONST ---  ---     ---
       100000H     ?C_USRSTKBOT                     VAR   ---  NDATA   ?C_USERSTACK
-      001544H     Do_1W_CRC                        LABEL ---  NCODE   ?PR?DS1820
-      001444H     Do_1W_Temperature                LABEL ---  NCODE   ?PR?DS1820
-      001482H     Do_1W_Temperature_Full           LABEL ---  NCODE   ?PR?DS1820
+      001564H     Do_1W_CRC                        LABEL ---  NCODE   ?PR?DS1820
+      001464H     Do_1W_Temperature                LABEL ---  NCODE   ?PR?DS1820
+      0014A2H     Do_1W_Temperature_Full           LABEL ---  NCODE   ?PR?DS1820
       000000H     RESET                            INTNO ---  ---     ---
-      0013FCH     Read_1W                          LABEL ---  NCODE   ?PR?DS1820
-      001368H     Reset_1W                         LABEL ---  NCODE   ?PR?DS1820
-      0013C4H     Write_1W                         LABEL ---  NCODE   ?PR?DS1820
-      0006CCH     amb_can_isr                      LABEL ---  NCODE   ?PR?AMB
-      00041AH     amb_init_slave                   LABEL ---  NCODE   ?PR?AMB
-      000496H     amb_register_function            LABEL ---  NCODE   ?PR?AMB
-      0004F2H     amb_start                        LABEL ---  NCODE   ?PR?AMB
-      0004E0H     amb_unregister_last_function     LABEL ---  NCODE   ?PR?AMB
-      001080H     ambient_msg                      LABEL ---  NCODE   ?PR?MAIN
-      0010B2H     controlMsg                       LABEL ---  NCODE   ?PR?MAIN
-      00158EH     ds1820_get_sn                    LABEL ---  NCODE   ?PR?DS1820
-      0015CAH     ds1820_get_temp                  LABEL ---  NCODE   ?PR?DS1820
-      001574H     ds1820_init                      LABEL ---  NCODE   ?PR?DS1820
+      00141CH     Read_1W                          LABEL ---  NCODE   ?PR?DS1820
+      001388H     Reset_1W                         LABEL ---  NCODE   ?PR?DS1820
+      0013E4H     Write_1W                         LABEL ---  NCODE   ?PR?DS1820
+      0006D0H     amb_can_isr                      LABEL ---  NCODE   ?PR?AMB
+      00041EH     amb_init_slave                   LABEL ---  NCODE   ?PR?AMB
+      00049AH     amb_register_function            LABEL ---  NCODE   ?PR?AMB
+      0004F6H     amb_start                        LABEL ---  NCODE   ?PR?AMB
+      0004E4H     amb_unregister_last_function     LABEL ---  NCODE   ?PR?AMB
+      001130H     ambient_msg                      LABEL ---  NCODE   ?PR?MAIN
+      001162H     controlMsg                       LABEL ---  NCODE   ?PR?MAIN
+      0015AEH     ds1820_get_sn                    LABEL ---  NCODE   ?PR?DS1820
+      0015EAH     ds1820_get_temp                  LABEL ---  NCODE   ?PR?DS1820
+      001594H     ds1820_init                      LABEL ---  NCODE   ?PR?DS1820
       000004H     fabs                             LABEL ---  NCODE   ?PR?FABS
-      000CBEH     getSetupInfo                     LABEL ---  NCODE   ?PR?MAIN
-      000CA4H     getVersionInfo                   LABEL ---  NCODE   ?PR?MAIN
-      000C06H     main                             LABEL ---  NCODE   ?PR?MAIN
-      0011C2H     monitorMsg                       LABEL ---  NCODE   ?PR?MAIN
-      0010B0H     received_48ms                    LABEL ---  NCODE   ?PR?MAIN
+      000CC2H     getMonTimers1                    LABEL ---  NCODE   ?PR?MAIN
+      000D1CH     getMonTimers2                    LABEL ---  NCODE   ?PR?MAIN
+      000D6EH     getSetupInfo                     LABEL ---  NCODE   ?PR?MAIN
+      000CA8H     getVersionInfo                   LABEL ---  NCODE   ?PR?MAIN
+      000C0AH     main                             LABEL ---  NCODE   ?PR?MAIN
+      001240H     monitorMsg                       LABEL ---  NCODE   ?PR?MAIN
+      001160H     received_48ms                    LABEL ---  NCODE   ?PR?MAIN
 
 
 
@@ -173,16 +177,18 @@ SYMBOL TABLE OF MODULE:  ..\objects\fe_mc_small (MAIN)
 
       VALUE       TYPE      REP       LENGTH  TGR   SYMBOL NAME
       =========================================================
-      000C06H     GLOBAL    LABEL     ---     ---   main
-      0010B0H     PUBLIC    LABEL     ---     ---   received_48ms
-      000CBEH     PUBLIC    LABEL     ---     ---   getSetupInfo
-      000CA4H     PUBLIC    LABEL     ---     ---   getVersionInfo
-      0011C2H     PUBLIC    LABEL     ---     ---   monitorMsg
-      0010B2H     PUBLIC    LABEL     ---     ---   controlMsg
-L166 LINKER/LOCATER V5.29.2.0                                                         09/18/2018  11:44:32  PAGE 4
+      000C0AH     GLOBAL    LABEL     ---     ---   main
+      001160H     PUBLIC    LABEL     ---     ---   received_48ms
+L166 LINKER/LOCATER V5.29.2.0                                                         09/26/2018  12:39:11  PAGE 4
 
 
-      001080H     PUBLIC    LABEL     ---     ---   ambient_msg
+      000D6EH     PUBLIC    LABEL     ---     ---   getSetupInfo
+      000CA8H     PUBLIC    LABEL     ---     ---   getVersionInfo
+      001240H     PUBLIC    LABEL     ---     ---   monitorMsg
+      001162H     PUBLIC    LABEL     ---     ---   controlMsg
+      000D1CH     PUBLIC    LABEL     ---     ---   getMonTimers2
+      000CC2H     PUBLIC    LABEL     ---     ---   getMonTimers1
+      001130H     PUBLIC    LABEL     ---     ---   ambient_msg
       000104H     PUBLIC    LABEL     ---     ---   ?C_STARTUP
       100000H     PUBLIC    VAR       ---     ---   ?C_USRSTKBOT
       00FA00H     PUBLIC    CONST     ---     ---   ?C_SYSSTKBOT
@@ -191,81 +197,81 @@ SYMBOL TABLE OF MODULE:  ..\objects\fe_mc_small (MAIN)
 
       000104H     BLOCK     LVL=0     0120H   ---   ?C_RESET
       ---         BLOCKEND  LVL=0     ---     ---   
-      0013C4H     PUBLIC    LABEL     ---     ---   Write_1W
-      001368H     PUBLIC    LABEL     ---     ---   Reset_1W
-      0013FCH     PUBLIC    LABEL     ---     ---   Read_1W
-      0015CAH     PUBLIC    LABEL     ---     ---   ds1820_get_temp
-      001544H     PUBLIC    LABEL     ---     ---   Do_1W_CRC
-      001574H     PUBLIC    LABEL     ---     ---   ds1820_init
-      001444H     PUBLIC    LABEL     ---     ---   Do_1W_Temperature
-      00158EH     PUBLIC    LABEL     ---     ---   ds1820_get_sn
-      001482H     PUBLIC    LABEL     ---     ---   Do_1W_Temperature_Full
-      100200H     SYMBOL    VAR       ---     ---   ds1820Running
-      0006CCH     PUBLIC    LABEL     ---     ---   amb_can_isr
-      000496H     PUBLIC    LABEL     ---     ---   amb_register_function
-      00041AH     PUBLIC    LABEL     ---     ---   amb_init_slave
-      0004E0H     PUBLIC    LABEL     ---     ---   amb_unregister_last_function
-      0004F2H     PUBLIC    LABEL     ---     ---   amb_start
-      000B3EH     SYMBOL    LABEL     ---     ---   amb_transmit_monitor
-      000534H     SYMBOL    LABEL     ---     ---   amb_setup_CAN_hw
-      0004F8H     SYMBOL    LABEL     ---     ---   amb_get_node_address
-      000504H     SYMBOL    LABEL     ---     ---   amb_get_serial_number
-      000880H     SYMBOL    LABEL     ---     ---   amb_handle_transaction
+      0013E4H     PUBLIC    LABEL     ---     ---   Write_1W
+      001388H     PUBLIC    LABEL     ---     ---   Reset_1W
+      00141CH     PUBLIC    LABEL     ---     ---   Read_1W
+      0015EAH     PUBLIC    LABEL     ---     ---   ds1820_get_temp
+      001564H     PUBLIC    LABEL     ---     ---   Do_1W_CRC
+      001594H     PUBLIC    LABEL     ---     ---   ds1820_init
+      001464H     PUBLIC    LABEL     ---     ---   Do_1W_Temperature
+      0015AEH     PUBLIC    LABEL     ---     ---   ds1820_get_sn
+      0014A2H     PUBLIC    LABEL     ---     ---   Do_1W_Temperature_Full
+      10020EH     SYMBOL    VAR       ---     ---   ds1820Running
+      0006D0H     PUBLIC    LABEL     ---     ---   amb_can_isr
+      00049AH     PUBLIC    LABEL     ---     ---   amb_register_function
+      00041EH     PUBLIC    LABEL     ---     ---   amb_init_slave
+      0004E4H     PUBLIC    LABEL     ---     ---   amb_unregister_last_function
+      0004F6H     PUBLIC    LABEL     ---     ---   amb_start
+      000B42H     SYMBOL    LABEL     ---     ---   amb_transmit_monitor
+      000538H     SYMBOL    LABEL     ---     ---   amb_setup_CAN_hw
+      0004FCH     SYMBOL    LABEL     ---     ---   amb_get_node_address
+      000508H     SYMBOL    LABEL     ---     ---   amb_get_serial_number
+      000884H     SYMBOL    LABEL     ---     ---   amb_handle_transaction
       00F67AH     SYMBOL    VAR       ---     ---   current_msg
       00F68AH     SYMBOL    VAR       ---     ---   slave_node
-      00168CH     PUBLIC    LABEL     ---     ---   ?C_FPADD
-      0016CAH     PUBLIC    LABEL     ---     ---   ?C_FPXSUB
-      001688H     PUBLIC    LABEL     ---     ---   ?C_FPSUB
+      0016ACH     PUBLIC    LABEL     ---     ---   ?C_FPADD
+      0016EAH     PUBLIC    LABEL     ---     ---   ?C_FPXSUB
+      0016A8H     PUBLIC    LABEL     ---     ---   ?C_FPSUB
 
-      001688H     BLOCK     LVL=0     00E8H   ---   ?C_FPSUB
+      0016A8H     BLOCK     LVL=0     00E8H   ---   ?C_FPSUB
       ---         BLOCKEND  LVL=0     ---     ---   
-      001770H     PUBLIC    LABEL     ---     ---   ?C_FPDIV
+      001790H     PUBLIC    LABEL     ---     ---   ?C_FPDIV
 
-      001770H     BLOCK     LVL=0     00C8H   ---   ?C_FPDIV
+      001790H     BLOCK     LVL=0     00C8H   ---   ?C_FPDIV
       ---         BLOCKEND  LVL=0     ---     ---   
-      001838H     PUBLIC    LABEL     ---     ---   ?C_FCAST
+      001858H     PUBLIC    LABEL     ---     ---   ?C_FCAST
 
-      001838H     BLOCK     LVL=0     0046H   ---   ?C_FCAST
+      001858H     BLOCK     LVL=0     0046H   ---   ?C_FCAST
       ---         BLOCKEND  LVL=0     ---     ---   
-      00187EH     PUBLIC    LABEL     ---     ---   ?C_FPCMP
+      00189EH     PUBLIC    LABEL     ---     ---   ?C_FPCMP
 
-      00187EH     BLOCK     LVL=0     0082H   ---   ?C_FPCMP
+      00189EH     BLOCK     LVL=0     0082H   ---   ?C_FPCMP
       ---         BLOCKEND  LVL=0     ---     ---   
       000004H     PUBLIC    LABEL     ---     ---   fabs
-      001900H     PUBLIC    LABEL     ---     ---   ?C_FPGETOPN
-      001926H     PUBLIC    LABEL     ---     ---   ?C_FPNANRSL
-      00192EH     PUBLIC    LABEL     ---     ---   ?C_FPINFRSL
-      001950H     PUBLIC    LABEL     ---     ---   ?C_FPNOERR
-      001946H     PUBLIC    LABEL     ---     ---   ?C_FPRSLNR
-      00193AH     PUBLIC    LABEL     ---     ---   ?C_FPOPRSL
-      00195EH     PUBLIC    LABEL     ---     ---   ?C_FPZERRSL
-L166 LINKER/LOCATER V5.29.2.0                                                         09/18/2018  11:44:32  PAGE 5
+      001920H     PUBLIC    LABEL     ---     ---   ?C_FPGETOPN
+L166 LINKER/LOCATER V5.29.2.0                                                         09/26/2018  12:39:11  PAGE 5
 
 
-      00195EH     PUBLIC    LABEL     ---     ---   ?C_FPUNFRS
+      001946H     PUBLIC    LABEL     ---     ---   ?C_FPNANRSL
+      00194EH     PUBLIC    LABEL     ---     ---   ?C_FPINFRSL
+      001970H     PUBLIC    LABEL     ---     ---   ?C_FPNOERR
+      001966H     PUBLIC    LABEL     ---     ---   ?C_FPRSLNR
+      00195AH     PUBLIC    LABEL     ---     ---   ?C_FPOPRSL
+      00197EH     PUBLIC    LABEL     ---     ---   ?C_FPZERRSL
+      00197EH     PUBLIC    LABEL     ---     ---   ?C_FPUNFRS
 
-      001900H     BLOCK     LVL=0     0026H   ---   ?C_FPGETOPN
+      001920H     BLOCK     LVL=0     0026H   ---   ?C_FPGETOPN
       ---         BLOCKEND  LVL=0     ---     ---   
 
-      001926H     BLOCK     LVL=0     0008H   ---   ?C_FPNANRSL
+      001946H     BLOCK     LVL=0     0008H   ---   ?C_FPNANRSL
       ---         BLOCKEND  LVL=0     ---     ---   
 
-      00192EH     BLOCK     LVL=0     000CH   ---   ?C_FPINFRSL
+      00194EH     BLOCK     LVL=0     000CH   ---   ?C_FPINFRSL
       ---         BLOCKEND  LVL=0     ---     ---   
 
-      00193AH     BLOCK     LVL=0     0022H   ---   ?C_FPOPRSL
+      00195AH     BLOCK     LVL=0     0022H   ---   ?C_FPOPRSL
       ---         BLOCKEND  LVL=0     ---     ---   
 
-      00195CH     BLOCK     LVL=0     0002H   ---   EXIT
+      00197CH     BLOCK     LVL=0     0002H   ---   EXIT
       ---         BLOCKEND  LVL=0     ---     ---   
 
-      00195EH     BLOCK     LVL=0     0006H   ---   ?C_FPZERRSL
+      00197EH     BLOCK     LVL=0     0006H   ---   ?C_FPZERRSL
       ---         BLOCKEND  LVL=0     ---     ---   
       000015H     PUBLIC    CONST     ---     ---   ?C_FPPRECISION
       000033H     PUBLIC    CONST     ---     ---   ?C_DPPRECISION
-      001964H     PUBLIC    LABEL     ---     ---   ?C_FPNEG
+      001984H     PUBLIC    LABEL     ---     ---   ?C_FPNEG
 
-      001964H     BLOCK     LVL=0     0010H   ---   ?C_FPNEG
+      001984H     BLOCK     LVL=0     0010H   ---   ?C_FPNEG
       ---         BLOCKEND  LVL=0     ---     ---   
       000406H     PUBLIC    VAR       ---     ---   ?C_ENDINIT
 
@@ -278,5 +284,5 @@ FUNCTION . . . . . . . . . . . . REG MASK
 =========================================
 
 
-Program Size: data=693(near=685) const=18(near=18) code=5792
+Program Size: data=707(near=699) const=22(near=22) code=5820
 L166 RUN COMPLETE.  0 WARNING(S),  0 ERROR(S)
