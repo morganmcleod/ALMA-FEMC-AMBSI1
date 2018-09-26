@@ -175,11 +175,11 @@ void main(void) {
 		return;
 
     /* Register callbacks for monitor timers (RCA -> 0x20010, 0x20011) */
-    //if (amb_register_function(GET_MON_TIMERS1_RCA, GET_MON_TIMERS1_RCA, getMonTimers1) != 0)
-    //    return;
+    if (amb_register_function(GET_MON_TIMERS1_RCA, GET_MON_TIMERS1_RCA, getMonTimers1) != 0)
+        return;
 
-    //if (amb_register_function(GET_MON_TIMERS2_RCA, GET_MON_TIMERS2_RCA, getMonTimers2) != 0)
-    //    return;
+    if (amb_register_function(GET_MON_TIMERS2_RCA, GET_MON_TIMERS2_RCA, getMonTimers2) != 0)
+        return;
 
 	/* globally enable interrupts */
   	amb_start();
@@ -212,6 +212,8 @@ int getVersionInfo(CAN_MSG_TYPE *message){
 	return 0;
 }
 
+
+/*! return the timers for phases 1 through 4 of the last monitor request handled. */
 int getMonTimers1(CAN_MSG_TYPE *message) {
     message->data[1] = (unsigned char) (monTimer1);
     message->data[0] = (unsigned char) (monTimer1 >> 8);
@@ -225,6 +227,8 @@ int getMonTimers1(CAN_MSG_TYPE *message) {
     return 0;
 }
 
+/*! return the timers for phases 5, 6, 7 of the last monitor request handled.
+    the fourth byte is the starting countdown value MAX_TIMEOUT */
 int getMonTimers2(CAN_MSG_TYPE *message) {
     message->data[1] = (unsigned char) (monTimer5);
     message->data[0] = (unsigned char) (monTimer5 >> 8);
