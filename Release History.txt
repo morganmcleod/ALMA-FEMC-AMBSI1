@@ -1,7 +1,13 @@
 RELEASE/REVISION HISTORY
 
-2018-09-18  001.001.000
-    Working on resolving communication timeouts.
+2018-10-01  001.002.000
+    Removed DEBUG symbol.  Previously it was always defined, therefore meaningless.
+    FULL_HANDSHAKE is always defined.  Implemented in macro IMPL_HANDSHAKE.
+    Added separate counters and monitor messages to measure timing between AMBSI1 and ARCOM
+    MAX_TIMEOUT=500, about 530 uS
+    AMBSI1 to ARCOM link set up in main().  GET_SETUP_INFO is vestigial but still returns what it previously did.
+    If a timeout occurs in a monitoring transaction, automatically retry once.
+    If a second timeout occurs, dont return 0xFFFFFFFFFFFFFFFF
 
 2009-04-14  001.000.001	    (Ver_01_00_01(ALMA-40_00_00_00-75_35_25_00_B_ICD).H86)
     Patch to First Official Release.
