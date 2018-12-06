@@ -7,7 +7,7 @@ RELEASE/REVISION HISTORY
     MAX_TIMEOUT=500, about 530 uS
     AMBSI1 to ARCOM link set up in main().  GET_SETUP_INFO is vestigial but still returns what it previously did.
     If a timeout occurs in a monitoring transaction, automatically retry once.
-    If a second timeout occurs, dont return 0xFFFFFFFFFFFFFFFF
+    If a second timeout occurs, don't return 0xFFFFFFFFFFFFFFFF
 
 2009-04-14  001.000.001	    (Ver_01_00_01(ALMA-40_00_00_00-75_35_25_00_B_ICD).H86)
     Patch to First Official Release.

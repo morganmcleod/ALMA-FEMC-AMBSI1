@@ -239,11 +239,7 @@ int getMonTimers2(CAN_MSG_TYPE *message) {
 	This function will return a CAN message with 1 byte (uchar) payload. The meaning of the payload
 	are as follows:
 		- 0x00 -> No Error	
-	   	- 0x01 -> Error in the registration of the special monitor RCA
-	   	- 0x02 -> Error in the registration of the special control RCA
-	   	- 0x03 -> Error in the registration of the monitor RCA
-	    - 0x04 -> Error in the registration of the control RCA
-	   	- 0x05 -> Warning RCA already initialized
+	   	- 0x05 -> No Error. Previous setup completed successfully.
 	   	- 0x06 -> Communication between ARCOM and AMBSI not yet established
 		- 0x07 -> Timeout while forwarding CAN message to the ARCOM board
 
