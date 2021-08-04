@@ -2,3 +2,4 @@ archives
 objects
 *.LST
 *.m66
+*.uvgui.*
