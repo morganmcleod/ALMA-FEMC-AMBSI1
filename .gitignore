@@ -3,3 +3,5 @@ objects
 *.LST
 *.m66
 *.uvgui.*
+*.__b
+*build_log*

@@ -1,12 +1,11 @@
 /*
  *****************************************************************************
- # $Id: amb.c,v 1.17 2008/03/05 19:44:57 avaccari Exp $
  #
- # Copyright (C) 1999
+ # Copyright (C) 1999-2021
  # Associated Universities, Inc. Washington DC, USA.
  #
  # Correspondence concerning ALMA should be addressed as follows:
- #        Internet email: mmaswgrp@nrao.edu
+ #        Internet email: feic_na@nrao.edu
  ****************************************************************************
  *
  *  AMB.C 
@@ -26,14 +25,17 @@
 
 /* Version of SOFTWARE */
 #define SW_VERSION_MAJOR 1
-#define SW_VERSION_MINOR 2
+#define SW_VERSION_MINOR 3
 #define SW_VERSION_PATCH 3
 /* Version of HARDWARE */
 #define HW_VERSION_MAJOR 1
 #define HW_VERSION_MINOR 6
 
 /* REVISION HISTORY */
-/*
+/* Version 01.03.03 - Morgan McLeod mmcleod@nrao.edu
+                      Separate monitor response from request handling to enable
+                      message queueing in client code.
+                      Async read ambient temperature
  * Version 01.01.02 - Released as Ver_1_1_2
            01.02.03   Patch by Andrea Vaccari - NRAO NTC
 		   			  Changed code to assure that any RCA is not serviced more than once in
@@ -63,13 +65,11 @@
 	#include <reg167.h>
 	#include <intrins.h>
 
-
-
 #include "amb.h"
- /* Include Dallas Semiconductor support for C167 */
+
+/* Include Dallas Semiconductor support for C167 */
 
 #include "..\..\libraries\ds1820\ds1820.h"
-
 
 
 /* Definitions of CAN controller structure */
@@ -116,7 +116,6 @@ static ubyte 	amb_get_node_address();
 static int		amb_get_serial_number();
 static int		amb_setup_CAN_hw();
 static void		amb_handle_transaction();
-static void		amb_transmit_monitor();
 
 /* All pertinent slave data */
 
@@ -321,7 +320,6 @@ int amb_setup_CAN_hw(){
 
 	  	CAN_OBJ[1].UAR  = UAR;	 /* set Upper Arbitration Register of Object 2 */
   		CAN_OBJ[1].LAR  = LAR;	 /* set Lower Arbitration Register of Object 2 */	
-  		//CAN_OBJ[1].LAR  = LAR+1;	 /* set Lower Arbitration Register of Object 2 */	
 
 	  	CAN_OBJ[1].Data[0] = slave_node.serial_number[0];   /* set data byte 0 */
   		CAN_OBJ[1].Data[1] = slave_node.serial_number[1];   /* set data byte 1 */
@@ -701,7 +699,7 @@ void amb_handle_transaction(){
 				current_msg.data[0] = (ubyte) (slave_node.revision_level[0]);
 				current_msg.data[1] = (ubyte) (slave_node.revision_level[1]);
 				current_msg.data[2] = (ubyte) (slave_node.revision_level[2]);
-				amb_transmit_monitor();
+				amb_transmit_monitor(&current_msg);
 				slave_node.num_transactions++;
 				return;
 				break;
@@ -712,7 +710,7 @@ void amb_handle_transaction(){
 				current_msg.data[2] = 0x0;
 			 	/* LEC from CAN controller */
  				current_msg.data[3] = C1CSR >> 8;
-				amb_transmit_monitor();
+				amb_transmit_monitor(&current_msg);
 				slave_node.num_transactions++;
 				return;
 				break;
@@ -722,7 +720,7 @@ void amb_handle_transaction(){
 				current_msg.data[1] = (ubyte) (slave_node.num_transactions>>16);
 				current_msg.data[2] = (ubyte) (slave_node.num_transactions>>8);
 				current_msg.data[3] = (ubyte) (slave_node.num_transactions);
-				amb_transmit_monitor();
+				amb_transmit_monitor(&current_msg);
 				slave_node.num_transactions++;
 				return;
 				break;
@@ -731,7 +729,7 @@ void amb_handle_transaction(){
 				current_msg.data[0] = (ubyte) (slave_node.sw_revision_level[0]);
 				current_msg.data[1] = (ubyte) (slave_node.sw_revision_level[1]);
 				current_msg.data[2] = (ubyte) (slave_node.sw_revision_level[2]);
-				amb_transmit_monitor();
+				amb_transmit_monitor(&current_msg);
 				slave_node.num_transactions++;
 				return;
 				break;
@@ -739,7 +737,7 @@ void amb_handle_transaction(){
 				current_msg.len = 2;
 				current_msg.data[0] = (ubyte) (slave_node.hw_revision_level[0]);
 				current_msg.data[1] = (ubyte) (slave_node.hw_revision_level[1]);
-				amb_transmit_monitor();
+				amb_transmit_monitor(&current_msg);
 				slave_node.num_transactions++;
 				return;
 				break;
@@ -756,7 +754,7 @@ void amb_handle_transaction(){
 			(slave_node.cb_ops[i].cb_func)(&current_msg);
 
 			if (current_msg.dirn == CAN_MONITOR)
-				amb_transmit_monitor();
+				amb_transmit_monitor(&current_msg);
 
 			return;
 		}	
@@ -764,14 +762,14 @@ void amb_handle_transaction(){
 }
 
 /* Routine to send monitor data back to master using CAN object 3 */
-void amb_transmit_monitor(){
+void amb_transmit_monitor(CAN_MSG_TYPE *monitor_msg){
   	ubyte i;
   	ulong TX_ID;
 		ulong v;
   		CAN_OBJ[2].MCR = 0xfb7f;     /* set CPUUPD, reset MSGVAL */
 
 	/* Recalculate CAN message from relative address */
-	TX_ID = slave_node.base_address + current_msg.relative_address;
+	TX_ID = slave_node.base_address + (*monitor_msg).relative_address;
 
 	/* Calculate the arbitration registers */
 
@@ -788,12 +786,12 @@ void amb_transmit_monitor(){
 
 	/* set transmit direction and length */
 
-   		CAN_OBJ[2].MCFG = 0x0c | (current_msg.len << 4);
+   		CAN_OBJ[2].MCFG = 0x0c | ((*monitor_msg).len << 4);
 
 	/* Copy data to CAN object 3 */
-   	for(i = 0; i < current_msg.len; i++) {
+   	for(i = 0; i < (*monitor_msg).len; i++) {
 
-      		CAN_OBJ[2].Data[i] = current_msg.data[i];
+      		CAN_OBJ[2].Data[i] = (*monitor_msg).data[i];
 	}
   		CAN_OBJ[2].MCR  = 0xf6bf;  /* set NEWDAT, reset CPUUPD, set MSGVAL */
 	

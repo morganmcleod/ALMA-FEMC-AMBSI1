@@ -1,12 +1,11 @@
 /*
  ****************************************************************************
- # $Id: amb.h,v 1.9 2004/11/18 19:57:56 avaccari Exp $
  #
- # Copyright (C) 1999
+ # Copyright (C) 1999-2021
  # Associated Universities, Inc. Washington DC, USA.
  #
  # Correspondence concerning ALMA should be addressed as follows:
- #        Internet email: mmaswgrp@nrao.edu
+ #        Internet email: feic_na@nrao.edu
  ****************************************************************************
  */
 /**
@@ -56,8 +55,9 @@
 
 	/* An enum for CAN message direction */
 	typedef enum {	CAN_MONITOR,
-					CAN_CONTROL
-	} CAN_DIRN_TYPE;
+	                CAN_CONTROL,
+	                CAN_MONITOR_QUEUED  /* Added in SW version 1.3.0 to permit message queueing in client code. */
+    } CAN_DIRN_TYPE;
 
 	/* Configuration and current data structure for CAN messages */
 	typedef struct {
@@ -121,6 +121,12 @@
 	extern void amb_get_error_status(uword	*num_errors,		             /* Number of CAN errors */
 									 ubyte	*last_slave_error);	             /* Last internal slave error */
 	extern void amb_get_num_transactions(ulong *num_transactions);           /* Number of completed transactions */
+
+	/**
+	 * Expose amb_transmit_monitor so that client code can queue message handling and send the response later.
+	 * Added in SW version 1.3.0
+	 */
+	extern void amb_transmit_monitor(CAN_MSG_TYPE *monitor_msg);
 
 #endif /* AMB_H */
 

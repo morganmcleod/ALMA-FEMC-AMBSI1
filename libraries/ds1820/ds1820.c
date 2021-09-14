@@ -335,4 +335,102 @@ short ds1820_get_temp(ubyte *MSB, ubyte *LSB, ubyte *count_remain, ubyte *count_
 	return 0;
 }
 
+short ds1820_get_temp_async(ubyte *MSB, ubyte *LSB, ubyte *count_remain, ubyte *count_per_C)
+{
+    static enum STATES {
+        NONE,
+        START,
+        RESET1,
+        WRITE1,
+        READ1,
+        RESET2,
+        WRITE2,
+        READ2,
+        COMPLETE
+    } state;
+    int byte_count, ret;
+    uword wait_count;
+    ubyte rx_buffer[10];
+    ubyte CRC;
 
+    ret = -1;   /* Default return if state is anything other than COMPLETE */
+
+    switch (state) {
+    case NONE:
+        if (ds1820Running) // Check if the subroutine is already running
+            ret = -2;      /* Error return */
+        else {
+            ds1820Running = 1; // Signal that this is running
+            state = START;
+        }
+        break;
+    case RESET1:
+        /* Start temperature reading cycle of DS1820 */
+        Reset_1W();
+        state = WRITE1;
+        break;
+    case WRITE1:
+        Write_1W(0xCC); /* Skip ROM */
+        Write_1W(0x44); /* Start conversion command */
+        wait_count = 0; /* Reset counter to detect read timeout */
+        state = READ1;
+        break;
+    case READ1:
+        /* Wait for conversion to complete (signaled by all 1s) */
+        if (Read_1W() == 0xff)
+            state = RESET2;
+        else if (++wait_count > 999) {
+            /* Error: wait for temperature conversion timed out */
+            ds1820Running = 0; // Function is done and can be called again
+            state = NONE;
+            ret = -2;      /* Error return */
+        }
+        break;
+    case RESET2:
+        /* Reset bus */
+        Reset_1W();
+        state = WRITE2;
+        break;
+    case WRITE2:
+        Write_1W(0xCC); /* Skip ROM */
+        Write_1W(0xBE); /* Read scratchpad */
+        byte_count = 0; /* Reset byte read counter */
+        CRC = 0x0;      /* Reset CRC */
+        state = READ2;
+        break;
+    case READ2:
+        /* read 9 data bytes */
+        if (byte_count < 9) {
+            rx_buffer[byte_count] = Read_1W();
+            CRC = Do_1W_CRC(rx_buffer[byte_count], CRC);
+            byte_count++;
+        } else {
+            state = COMPLETE;
+        }
+        break;
+    case COMPLETE:
+        if (CRC != 0x0) {
+            ds1820Running = 0; // Function is done and can be called again
+            state = NONE;
+            ret = -2;      /* Error return */
+        } else {
+            /* Low accuracy temperature is in first two bytes */
+            *LSB = rx_buffer[0];
+            *MSB = rx_buffer[1];
+
+            /* Higher resolution data is in bytes 6 and 7 */
+            *count_remain = rx_buffer[6];
+            *count_per_C = rx_buffer[7];
+
+            ds1820Running = 0; // Function is done and can be called again
+            state = NONE;
+            ret = 0;    /* Success return */
+        }
+        break;
+    default:
+        state = NONE;
+        ret = -2;
+        break;
+    }
+    return ret;
+}

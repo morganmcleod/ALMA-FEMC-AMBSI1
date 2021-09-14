@@ -40,6 +40,14 @@ short ds1820_get_sn(ubyte sn[8]);
 short ds1820_get_temp(ubyte *MSB, ubyte *LSB, ubyte *count_remain, ubyte *count_per_C);
 
 /**
+ * Non-blocking version of get temp.
+ * Returns -1 while a read is in progress and 0 when conversion is complete.
+ * Returns -2 for all errors.
+ */
+short ds1820_get_temp_async(ubyte *MSB, ubyte *LSB, ubyte *count_remain, ubyte *count_per_C);
+
+
+/**
  * Generic 1 Wire primitive functions 
  */
 ubyte Reset_1W(void);              /* Reset bus and test for presence pulse */
