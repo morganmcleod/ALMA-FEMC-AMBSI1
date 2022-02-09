@@ -29,10 +29,10 @@
       <MCS166>
         <Clock>20000000</Clock>
         <uocRom>0</uocRom>
-        <uocXCAN>0</uocXCAN>
+        <uocXCAN>1</uocXCAN>
         <hadROM>0</hadROM>
-        <hadXRAM>0</hadXRAM>
-        <hadICAN>0</hadICAN>
+        <hadXRAM>1</hadXRAM>
+        <hadICAN>1</hadICAN>
         <uocIROM2>0</uocIROM2>
         <uocIROM3>0</uocIROM3>
         <uocXRAM3>0</uocXRAM3>
@@ -69,8 +69,8 @@
           </Ocm6>
           <ICAN>
             <Type>0</Type>
-            <StartAddress>0x0</StartAddress>
-            <Size>0x0</Size>
+            <StartAddress>0xe800</StartAddress>
+            <Size>0x800</Size>
           </ICAN>
           <IROM>
             <Type>0</Type>
@@ -79,8 +79,8 @@
           </IROM>
           <XRAM>
             <Type>0</Type>
-            <StartAddress>0x0</StartAddress>
-            <Size>0x0</Size>
+            <StartAddress>0xe000</StartAddress>
+            <Size>0x800</Size>
           </XRAM>
           <IRAM>
             <Type>0</Type>

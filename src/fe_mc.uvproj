@@ -13,13 +13,13 @@
       <uAC6>0</uAC6>
       <TargetOption>
         <TargetCommonOption>
-          <Device>C167-LM</Device>
+          <Device>C167CR-LM</Device>
           <Vendor>Infineon</Vendor>
-          <Cpu>IRAM(0xF600-0xFDFF) CLOCK(20000000) MOD167</Cpu>
+          <Cpu>IRAM(0xF600-0xFDFF) XRAM(0xE000-0xE7FF) ICAN(0xE800-0xEFFF) CLOCK(20000000) MOD167</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile>"LIB\START167.A66" ("C16x/ST10 Startup Code")</StartupFile>
           <FlashDriverDll></FlashDriverDll>
-          <DeviceId>2913</DeviceId>
+          <DeviceId>2914</DeviceId>
           <RegisterFile>REG167.H</RegisterFile>
           <MemoryEnv></MemoryEnv>
           <Cmp></Cmp>
@@ -109,11 +109,11 @@
           <SimDllName>S166.DLL</SimDllName>
           <SimDllArguments></SimDllArguments>
           <SimDlgDll>D167.DLL</SimDlgDll>
-          <SimDlgDllArguments>-p167</SimDlgDllArguments>
+          <SimDlgDllArguments>-p167CR</SimDlgDllArguments>
           <TargetDllName>S166.DLL</TargetDllName>
           <TargetDllArguments></TargetDllArguments>
           <TargetDlgDll>T167.DLL</TargetDlgDll>
-          <TargetDlgDllArguments>-p167</TargetDlgDllArguments>
+          <TargetDlgDllArguments>-p167CR</TargetDlgDllArguments>
         </DllOption>
         <DebugOption>
           <OPTHX>
@@ -176,7 +176,7 @@
           </Flash1>
           <bUseTDR>0</bUseTDR>
           <Flash2></Flash2>
-          <Flash3>"" ()</Flash3>
+          <Flash3></Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -194,7 +194,7 @@
             <Mod167>1</Mod167>
             <ModV2>0</ModV2>
             <UseOnChipRom>0</UseOnChipRom>
-            <UseOnChipXramCan>0</UseOnChipXramCan>
+            <UseOnChipXramCan>1</UseOnChipXramCan>
             <UseOnChipXram2>0</UseOnChipXram2>
             <NearRamMemory>0</NearRamMemory>
             <NearRomMemory>0</NearRomMemory>
