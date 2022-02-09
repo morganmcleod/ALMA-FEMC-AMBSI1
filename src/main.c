@@ -1,17 +1,11 @@
 /*!	\file	main.c
-	\brief	AMBSI1 firmware code
+	\brief	AMBSI1 firmware code for the FEMC module
 
 	This is the firmware to be loaded into the AMBSI1 to allow the AMBSI1 to work as a
 	bridge between the CAN bus contained in the AMB and the ARCOM embedded controller
 	handling the front end hardware.
 */
 /* Defines */
-
-//! Full handshake mode
-//! Fully handshaken communication with the ARCOM board
-//! In versions 1.0.0 and 1.0.1 this was always defined because DEBUG was always defined.
-//! For version 1.2.x DEBUG is no longer defined.
-#define FULL_HANDSHAKE
 
 //! Longest timeout allowed waiting for acknowledgement from ARCOM board
 /*! During each phase of monitoring, a count-down timer counts from \p MAX_TIMEOUT
@@ -50,7 +44,7 @@
 /* Version Info */
 #define VERSION_MAJOR 01	//!< Major Version
 #define VERSION_MINOR 02	//!< Minor Revision
-#define VERSION_PATCH 00	//!< Patch Level
+#define VERSION_PATCH 02	//!< Patch Level
 
 /* Uses serial port */
 #include <reg167.h>
@@ -61,7 +55,7 @@
 #include "..\libraries\ds1820\ds1820.h"
 
 /* Set aside memory for the callbacks in the AMB library */
-static CALLBACK_STRUCT idata cb_memory[7];
+static CALLBACK_STRUCT idata cb_memory[9];
 
 /* CAN message callbacks */
 int ambient_msg(CAN_MSG_TYPE *message); 	//!< Called to get the board temperature temperature
@@ -78,26 +72,25 @@ static ubyte idata ambient_temp_data[4];
 /* External bus control signal buffer chip enable is on P4.7 */
 sbit  DISABLE_EX_BUF	= P4^7;
 
-/* Arcom Parallel port connection lines */
-sbit  WRITE				= P2^2;
-sbit  DSTROBE			= P2^3;
-sbit  WAIT				= P2^8;
-sbit  INT				= P2^7;
-sbit  SELECT			= P2^10;
-sbit  INIT				= P2^5;
+/* ARCOM Parallel port connection lines */
+sbit  EPPC_NWRITE       = P2^2;
+sbit  EPPC_NDATASTROBE  = P2^3;
+sbit  SPPC_INIT         = P2^5;
+sbit  SPPC_NSELECT      = P2^6;
+sbit  EPPS_INTERRUPT    = P2^7;   // output
+sbit  EPPS_NWAIT        = P2^8;   // output
+sbit  SPPS_SELECTIN     = P2^10;  // output
 
-/* Separate timers for each phase of monitor transaction */
-static unsigned int monTimer1;
-static unsigned int monTimer2;
-static unsigned int monTimer3;
-static unsigned int monTimer4;
-static unsigned int monTimer5;
-static unsigned int monTimer6;
-static unsigned int monTimer7;
+/* Separate timers for each phase of monitor and control transaction */
+static unsigned int idata monTimer1, monTimer2, monTimer3, monTimer4, monTimer5, monTimer6, monTimer7,
+                          cmdTimer1, cmdTimer2, cmdTimer3, cmdTimer4, cmdTimer5, cmdTimer6;
 
 /* Macro to implement FULL_HANDSHAKE */
 // Wait for Data Strobe to go low
-#define IMPL_HANDSHAKE(TIMER) for(TIMER = MAX_TIMEOUT; TIMER && DSTROBE; TIMER--) {}
+#define IMPL_HANDSHAKE(TIMER) for(TIMER = MAX_TIMEOUT; TIMER && EPPC_NDATASTROBE; TIMER--) {}
+
+/* Macro to toggle WAIT high then low */
+#define TOGGLE_NWAIT { EPPS_NWAIT = 1; EPPS_NWAIT = 0; }
 
 /* RCAs address ranges */
 static unsigned long idata lowestMonitorRCA,highestMonitorRCA,
@@ -147,8 +140,8 @@ void main(void) {
 	DP7=0x00;
 	DP7=0xFF;
 	P2=0x0000;
-	SELECT=1;
-	INIT=0;
+	SPPS_SELECTIN=1;
+	SPPC_INIT=0;
 	DP2=0x0580; 
 
 	/* Register callbacks for CAN events (RCA -> 0x20001) */
@@ -167,8 +160,8 @@ void main(void) {
 
 	/* Handshake readiness status with ARCOM board */
 	ready=0;
-	SELECT = 0; // Select line to 0
-	while(INIT){ // Wait of init line to go to 0. In the mean time read the temperature
+	SPPS_SELECTIN = 0; // Select line to 0
+	while(SPPC_INIT){ // Wait of init line to go to 0. In the mean time read the temperature
 		ds1820_get_temp(&ambient_temp_data[1], &ambient_temp_data[0], &ambient_temp_data[2], &ambient_temp_data[3]);
 	}
     ready=1;
@@ -432,75 +425,38 @@ int controlMsg(CAN_MSG_TYPE *message){
 	}
 
 	/* Trigger interrupt */
-	INT = 1;
+	EPPS_INTERRUPT = 1;
 
 	/* Send RCA */
     IMPL_HANDSHAKE(timer)
 	P7 = (uword) (message->relative_address);	// Put data on port
-	WAIT = 1;	// Acknowledge with Wait going high
-	WAIT = 0; 	/* Wait down as quick as possible for next message.
-				   Any wait state will keep wait high too long and make the ARCOM believe it is an
-				   aknowledgment to the following data strobe. */
-	#ifdef FULL_HANDSHAKE
-		IMPL_HANDSHAKE(timer)
-	#else
-		_nop_();  // One nop to wait for following data strobe to go low
-	#endif
-	P7 = (uword) (message->relative_address>>8); 	// Put data on port
-	WAIT = 1;	// Acknowledge with Wait going high
-	WAIT = 0; 	/* Wait down as quick as possible for next message.
-				   Any wait state will keep wait high too long and make the ARCOM believe it is an
-				   aknowledgment to the following data strobe. */
+    TOGGLE_NWAIT;
 
-    #ifdef FULL_HANDSHAKE
-        IMPL_HANDSHAKE(timer)
-    #else
-        _nop_();  // One nop to wait for following data strobe to go low
-    #endif
+    IMPL_HANDSHAKE(timer)
+    P7 = (uword) (message->relative_address>>8); 	// Put data on port
+    TOGGLE_NWAIT;
+
+    IMPL_HANDSHAKE(timer)
 	P7 = (uword) (message->relative_address>>16); 	// Put data on port
-	WAIT = 1;	// Acknowledge with Wait going high
-	WAIT = 0;	/* Wait down as quick as possible for next message.
-				   Any wait state will keep wait high too long and make the ARCOM believe it is an
-				   aknowledgment to the following data strobe. */
+    TOGGLE_NWAIT;
 
-    #ifdef FULL_HANDSHAKE
-        IMPL_HANDSHAKE(timer)
-    #else
-        _nop_();  // One nop to wait for following data strobe to go low
-    #endif
+    IMPL_HANDSHAKE(timer)
 	P7 = (uword) (message->relative_address>>24); 	// Put data on port
-	WAIT = 1;	// Acknowledge with Wait going high
-	WAIT = 0;	/* Wait down as quick as possible for next message.
-				   Any wait state will keep wait high too long and make the ARCOM believe it is an
-				   aknowledgment to the following data strobe. */
+    TOGGLE_NWAIT;
 
-	/* Send payload size (0 -> monitor message) */
-    #ifdef FULL_HANDSHAKE
-        IMPL_HANDSHAKE(timer)
-    #else
-        _nop_();  // One nop to wait for following data strobe to go low
-    #endif
-	P7 = message->len;  // Put data on port (0 -> monitor message)
-	WAIT = 1;	// Acknowledge with Wait going high
-	WAIT = 0;	/* Wait down as quick as possible for next message.
-				   Any wait state will keep wait high too long and make the ARCOM believe it is an
-				   aknowledgment to the following data strobe. */
+	/* Send payload size */
+    IMPL_HANDSHAKE(timer)
+	P7 = message->len;
+    TOGGLE_NWAIT;
 
 	for(counter=0;counter<message->len;counter++){
-        #ifdef FULL_HANDSHAKE
-            IMPL_HANDSHAKE(timer)
-        #else
-            // The for cycle is slow enough for following data strobe to go low
-        #endif
-		P7 = message->data[counter];	// Put data on port (0 -> monitor message)
-		WAIT = 1;	// Acknowledge with Wait going high
-		WAIT = 0; 	/* Wait down as quick as possible for next message.
-					   Any wait state will keep wait high too long and make the ARCOM believe it is an
-					   aknowledgment to the following data strobe. */
+	    IMPL_HANDSHAKE(timer)
+		P7 = message->data[counter];
+        TOGGLE_NWAIT;
 	}
 
 	/* Untrigger interrupt */
-	INT = 0;
+	EPPS_INTERRUPT = 0;
 
 	return 0;
 }
@@ -519,55 +475,24 @@ int implMonitorSingle(CAN_MSG_TYPE *message) {
     /* Send RCA */
     IMPL_HANDSHAKE(monTimer1)
     P7 = (uword) (message->relative_address);   // Put data on port
-    WAIT = 1;   // Acknowledge with Wait going high
-    WAIT = 0;   /* Wait down as quick as possible for next message.
-                   Any wait state will keep wait high too long and make the ARCOM believe it is an
-                   aknowledgment to the following data strobe. */
+    TOGGLE_NWAIT;
 
-    #ifdef FULL_HANDSHAKE
-        IMPL_HANDSHAKE(monTimer2)
-    #else
-        _nop_();  // One nop to wait for following data strobe to go low
-    #endif
+    IMPL_HANDSHAKE(monTimer2)
     P7 = (uword) (message->relative_address>>8);    // Put data on port
-    WAIT = 1;   // Acknowledge with Wait going high
-    WAIT = 0;   /* Wait down as quick as possible for next message.
-                   Any wait state will keep wait high too long and make the ARCOM believe it is an
-                   aknowledgment to the following data strobe. */
+    TOGGLE_NWAIT;
 
-    #ifdef FULL_HANDSHAKE
-        IMPL_HANDSHAKE(monTimer3)
-    #else
-        _nop_();  // One nop to wait for following data strobe to go low
-    #endif
+    IMPL_HANDSHAKE(monTimer3)
     P7 = (uword) (message->relative_address>>16);   // Put data on port
-    WAIT = 1;   // Acknowledge with Wait going high
-    WAIT = 0;   /* Wait down as quick as possible for next message.
-                   Any wait state will keep wait high too long and make the ARCOM believe it is an
-                   aknowledgment to the following data strobe. */
+    TOGGLE_NWAIT;
 
-    #ifdef FULL_HANDSHAKE
-        IMPL_HANDSHAKE(monTimer4)
-    #else
-        _nop_();  // One nop to wait for following data strobe to go low
-    #endif
+    IMPL_HANDSHAKE(monTimer4)
     P7 = (uword) (message->relative_address>>24);   // Put data on port
-    WAIT = 1;   // Acknowledge with Wait going high
-    WAIT = 0;   /* Wait down as quick as possible for next message.
-                   Any wait state will keep wait high too long and make the ARCOM believe it is an
-                   aknowledgment to the following data strobe. */
+    TOGGLE_NWAIT;
 
     /* Send payload size (0 -> monitor message) */
-    #ifdef FULL_HANDSHAKE
-        IMPL_HANDSHAKE(monTimer5)
-    #else
-        _nop_();  // One nop to wait for following data strobe to go low
-    #endif
+    IMPL_HANDSHAKE(monTimer5)
     P7 = message->len;  // Put data on port (0 -> monitor message)
-    WAIT = 1;   // Acknowledge with Wait going high
-    WAIT = 0;   /* Wait down as quick as possible for next message.
-                   Any wait state will keep wait high too long and make the ARCOM believe it is an
-                   aknowledgment to the following data strobe. */
+    TOGGLE_NWAIT;
 
     /* Set port to receive data */
     DP7 = 0x00;
@@ -575,10 +500,7 @@ int implMonitorSingle(CAN_MSG_TYPE *message) {
     /* Receive monitor payload size */
     IMPL_HANDSHAKE(monTimer6)
     message->len = (ubyte) P7;  // Read data from port
-    WAIT = 1;   // Acknowledge with Wait going high
-    WAIT = 0;   /* Wait down as quick as possible for next message.
-                   Any wait state will keep wait high too long and make the ARCOM believe it is an
-                   aknowledgment to the following data strobe. */
+    TOGGLE_NWAIT;
 
     /* Detect timeout or error receiving payload size */
     if (!monTimer6 || message->len > MAX_CAN_MSG_PAYLOAD) {
@@ -592,16 +514,9 @@ int implMonitorSingle(CAN_MSG_TYPE *message) {
 
     /* Get the payload */
     for(counter = 0; counter < message->len; counter++) { 
-        #ifdef FULL_HANDSHAKE
-            IMPL_HANDSHAKE(monTimer7)
-        #else
-            // The for cycle is slow enough for following data strobe to go low
-        #endif
+        IMPL_HANDSHAKE(monTimer7)
         message->data[counter] = (ubyte) P7;    // Read data from port
-        WAIT = 1;   // Acknowledge with Wait going high
-        WAIT = 0;   /* Wait down as quick as possible for next message.
-                       Any wait state will keep wait high too long and make the ARCOM believe it is an
-                       aknowledgment to the following data strobe. */
+        TOGGLE_NWAIT;
     }
 
     //Set port to transmit data:
@@ -642,7 +557,7 @@ int monitorMsg(CAN_MSG_TYPE *message) {
 	}
 
 	/* Trigger interrupt */
-	INT = 1;
+	EPPS_INTERRUPT = 1;
 
     // Try 1:
     ret = implMonitorSingle(message);
@@ -653,7 +568,7 @@ int monitorMsg(CAN_MSG_TYPE *message) {
     }
 
 	/* Untrigger interrupt */
-	INT = 0;
+	EPPS_INTERRUPT = 0;
 	return ret;
 }
 
