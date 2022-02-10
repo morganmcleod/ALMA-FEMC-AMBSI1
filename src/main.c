@@ -44,7 +44,7 @@
 /* Version Info */
 #define VERSION_MAJOR 01	//!< Major Version
 #define VERSION_MINOR 02	//!< Minor Revision
-#define VERSION_PATCH 02	//!< Patch Level
+#define VERSION_PATCH 03	//!< Patch Level
 
 /* Uses serial port */
 #include <reg167.h>
@@ -65,6 +65,9 @@ int getSetupInfo(CAN_MSG_TYPE *message);  	//!< Called to get the AMBSI1 <-> ARC
 int getVersionInfo(CAN_MSG_TYPE *message);	//!< Called to get firmware version informations 
 int getMonTimers1(CAN_MSG_TYPE *message);    //!< Retrieve last monitor message timers
 int getMonTimers2(CAN_MSG_TYPE *message);    //!< Retrieve last monitor message timers
+
+/* implementation helpers */
+int implMonitorSingle(CAN_MSG_TYPE *message, unsigned char sendReply);
 
 /* A global for the last read temperature */
 static ubyte idata ambient_temp_data[4];
@@ -141,7 +144,6 @@ void main(void) {
 	DP7=0xFF;
 	P2=0x0000;
 	SPPS_SELECTIN=1;
-	SPPC_INIT=0;
 	DP2=0x0580; 
 
 	/* Register callbacks for CAN events (RCA -> 0x20001) */
@@ -158,9 +160,9 @@ void main(void) {
 	/* globally enable interrupts */
   	amb_start();
 
-	/* Handshake readiness status with ARCOM board */
+	/* Wait for readiness status with ARCOM board.
+	 * Effectively this does nothing because the line is uncontrolled during boot up. */
 	ready=0;
-	SPPS_SELECTIN = 0; // Select line to 0
 	while(SPPC_INIT){ // Wait of init line to go to 0. In the mean time read the temperature
 		ds1820_get_temp(&ambient_temp_data[1], &ambient_temp_data[0], &ambient_temp_data[2], &ambient_temp_data[3]);
 	}
@@ -177,6 +179,8 @@ void main(void) {
             for(timer = 100000L; timer; timer--) {}   // about 0.1 second
         }
     }
+
+    SPPS_SELECTIN = 0; // Select line to 0
 
 	/* Never return */
 	while (1) {
@@ -268,7 +272,7 @@ int getSetupInfo(CAN_MSG_TYPE *message){
 	myCANMessage.dirn=CAN_MONITOR; // Direction: monitor
 	myCANMessage.len=0;	// Size: 0
 	myCANMessage.relative_address=GET_SPECIAL_MONITOR_RCAS; // 0x20003 -> RCA: special address to retrieve the special monitor RCAs informations
-	if(monitorMsg(&myCANMessage)){ // Send the monitor request.
+	if(implMonitorSingle(&myCANMessage, FALSE)){ // Send the monitor request.
 		message->data[0]=0x07; // Error 0x07: Timeout while forwarding the message to the ARCOM board
 		return -1;
 	}
@@ -292,7 +296,7 @@ int getSetupInfo(CAN_MSG_TYPE *message){
 	myCANMessage.dirn=CAN_MONITOR; // Direction: monitor
 	myCANMessage.len=0;	// Size: 0
 	myCANMessage.relative_address=GET_SPECIAL_CONTROL_RCAS; // 0x20004 -> RCA: special address to retrieve the special control RCAs informations
-	if(monitorMsg(&myCANMessage)){ // Send the monitor request.
+    if(implMonitorSingle(&myCANMessage, FALSE)){ // Send the monitor request.
 		message->data[0]=0x07; // Error 0x07: Timeout while forwarding the message to the ARCOM board
 		/* Unregister previously succesfully registered functions */
 		amb_unregister_last_function(); // SPECIAL MONITOR RCAs
@@ -318,7 +322,7 @@ int getSetupInfo(CAN_MSG_TYPE *message){
 	myCANMessage.dirn=CAN_MONITOR; // Direction: monitor
 	myCANMessage.len=0;	// Size: 0
 	myCANMessage.relative_address=GET_MONITOR_RCAS; // 0x20005 -> RCA: special address to retrieve the monitor RCAs informations
-	if(monitorMsg(&myCANMessage)){ // Send the monitor request.
+    if(implMonitorSingle(&myCANMessage, FALSE)){ // Send the monitor request.
 		message->data[0]=0x07; // Error 0x07: Timeout while forwarding the message to the ARCOM board
 		/* Unregister previously succesfully registered functions */
 		amb_unregister_last_function(); // SPECIAL CONTROL RCAs
@@ -345,7 +349,7 @@ int getSetupInfo(CAN_MSG_TYPE *message){
 	myCANMessage.dirn=CAN_MONITOR; // Direction: monitor
 	myCANMessage.len=0;	// Size: 0
 	myCANMessage.relative_address=GET_CONTROL_RCAS; // 0x20006 -> RCA: special address to retrieve the special control RCAs informations
-	if(monitorMsg(&myCANMessage)){ // Send the monitor request.
+    if(implMonitorSingle(&myCANMessage, FALSE)){ // Send the monitor request.
 		message->data[0]=0x07; // Error 0x07: Timeout while forwarding the message to the ARCOM board
 		/* Unregister previously succesfully registered functions */
 		amb_unregister_last_function(); // MONITOR RCAs
@@ -466,11 +470,15 @@ int controlMsg(CAN_MSG_TYPE *message){
     Abstracted out so that monitorMsg below can retry
     
     \param  *message    a CAN_MSG_TYPE 
+    \param  sendReply   TRUE to send CAN replies.  FALSE to suppress them for messages sent in getSetupInfo().
     \return
         - 0 -> Everything went OK
         - -1 -> Time out during CAN message forwarding */
-int implMonitorSingle(CAN_MSG_TYPE *message) {
-    unsigned char counter;
+int implMonitorSingle(CAN_MSG_TYPE *message, unsigned char sendReply) {
+    unsigned char counter, timeout;
+
+    /* Trigger interrupt */
+    EPPS_INTERRUPT = 1;
 
     /* Send RCA */
     IMPL_HANDSHAKE(monTimer1)
@@ -496,6 +504,8 @@ int implMonitorSingle(CAN_MSG_TYPE *message) {
 
     /* Set port to receive data */
     DP7 = 0x00;
+    _nop_();
+    _nop_();
 
     /* Receive monitor payload size */
     IMPL_HANDSHAKE(monTimer6)
@@ -503,27 +513,29 @@ int implMonitorSingle(CAN_MSG_TYPE *message) {
     TOGGLE_NWAIT;
 
     /* Detect timeout or error receiving payload size */
+    timeout = 0;
     if (!monTimer6 || message->len > MAX_CAN_MSG_PAYLOAD) {
-        // Set port to transmit data:
-        DP7 = 0xFF;
-        // Set the payload timer to zero:
-        monTimer7 = 0;
-        // And exit:
-        return -1;
+        timeout = 1;
     }
 
-    /* Get the payload */
-    for(counter = 0; counter < message->len; counter++) { 
-        IMPL_HANDSHAKE(monTimer7)
-        message->data[counter] = (ubyte) P7;    // Read data from port
-        TOGGLE_NWAIT;
+    if (!timeout) {
+        /* Get the payload */
+        for(counter = 0; counter < message->len; counter++) {
+            IMPL_HANDSHAKE(monTimer7)
+            message->data[counter] = (ubyte) P7;    // Read data from port
+            TOGGLE_NWAIT;
+        }
     }
 
     //Set port to transmit data:
     DP7 = 0xFF;
+    _nop_();
+    _nop_();
+    /* Untrigger interrupt */
+    EPPS_INTERRUPT = 0;
 
-    /* Detect timeout */
-    if(!monTimer7) {
+    /* Handle timeout or reply suppressed */
+    if (timeout || !sendReply) {
         // timed out communicating with the ARCOM:
         // We don't want to send back garbage data (as in earlier versions)
         // but there is no way to return a value which prevents transmitting the buffer.
@@ -531,9 +543,11 @@ int implMonitorSingle(CAN_MSG_TYPE *message) {
         // Yucky workaround, tell the caller it's actually a control msg:       
         message->dirn = CAN_CONTROL;
         message->len=0;
-        return -1;
     }
-    return 0;
+    if (timeout)
+        return -1;
+    else
+        return 0;
 }
     
 
@@ -556,19 +570,13 @@ int monitorMsg(CAN_MSG_TYPE *message) {
 		return 0;
 	}
 
-	/* Trigger interrupt */
-	EPPS_INTERRUPT = 1;
-
     // Try 1:
-    ret = implMonitorSingle(message);
+    ret = implMonitorSingle(message, TRUE);
 
-    if (ret != 0) {
+    if (ret != 0)
         // Retry once:
-        ret = implMonitorSingle(message);
-    }
+        ret = implMonitorSingle(message, TRUE);
 
-	/* Untrigger interrupt */
-	EPPS_INTERRUPT = 0;
 	return ret;
 }
 
