@@ -741,13 +741,11 @@ int implControlSingle(CAN_MSG_TYPE *message) {
     return 0;
 }
 
-/*! Implementation of one monitor transaction.
+/*! Implementation of partial monitor transaction.
+    Sends the requested RCA to the ARCOM.
     Does not send the reply.
 
-    \param  *message    a CAN_MSG_TYPE 
-    \return
-        - 0 -> Everything went OK
-        - -1 -> Time out during CAN message forwarding.  Don't send the reply */
+    \param  *message    a CAN_MSG_TYPE */
 void implMonitorSingle(CAN_MSG_TYPE *message) {
 
     /* Trigger interrupt */
@@ -794,7 +792,11 @@ void implMonitorSingle(CAN_MSG_TYPE *message) {
     return;
 }
 
-void amb_test_cc3io() interrupt CC3INT = 0x13 {
+/*! Implementation of partial monitor transaction.
+    Receives the requested RCA data from the ARCOM.
+    It uses GPIO2.3 falling edge transition to start data flow.
+    Does not send the reply. */
+void recvMonitorSingle() interrupt CC3INT = 0x13 {
     unsigned char counter;
     if (!waitingArcom) return;                      // Check if we are waiting for ARCOM response
     currentArcomMonitor->len = (ubyte)P7;           // Read data from port
