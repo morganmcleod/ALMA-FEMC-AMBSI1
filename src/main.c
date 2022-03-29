@@ -50,12 +50,14 @@
 #define INSPECT_QUEUE_HEAD_RCA      0x20026L    //!< Return the RCA last written to the queue
 #define INSPECT_QUEUE_HEAD_DATA     0x20027L    //!< Return the data bytes last written to the queue
 #define INSPECT_QUEUE_HEAD_LEN_DIRN 0x20028L    //!< Return the length (1 byte) and message direction (2 bytes) last written to the queue
+#define INSPECT_CURRENT_MON_HEAD    0x20029L    //!< Return the last RCA monitor sent to the ARCOM and length, timeout of received data
+#define INSPECT_CURRENT_MON_DATA    0x2002AL    //!< Return the data received from the last RCA monitor sent to the ARCOM
 #define LAST_AMBSI1_RESERVED        0x2003FL    //!< Highest special RCA served by this firmware not forwarded to ARCOM.
 
 /* Version Info */
 #define VERSION_MAJOR 01    //!< Major Version
 #define VERSION_MINOR 03    //!< Minor Revision
-#define VERSION_PATCH 03    //!< Patch Level
+#define VERSION_PATCH 04    //!< Patch Level
 
 /* Uses GPIO ports */
 #include <reg167.h>
@@ -83,6 +85,9 @@ static unsigned char idata queueWritePos = 0;   //!< next queue write position
 static unsigned char idata queueReadPos = 0;    //!< next queue read position
 static unsigned char idata prevReadPos = 0;     //!< previous queue read position.
 static unsigned char idata queueOverflow = 0;   //!< latching detect queue overflow.
+static unsigned char idata waitingArcom = 0;    //!< waiting for ARCOM monitor response status
+static unsigned char idata monitorTimeout = 0;  //!< ARCOM monitor response timeout
+static CAN_MSG_TYPE idata *currentArcomMonitor; //!< pointer to last monitor data sent to the ARCOM
 
 // Copy a message into the queue at queueWritePos.
 // It is critical that the memcpy() happens before ++queueWritePos.
@@ -109,7 +114,7 @@ static unsigned char idata queueOverflow = 0;   //!< latching detect queue overf
 int ambient_msg(CAN_MSG_TYPE *message);       //!< Called to read get the board temperature sensor
 int messageHandler(CAN_MSG_TYPE *message);    //!< Callback from AMB lib to handle all CAN monitor and control messages
 int implControlSingle(CAN_MSG_TYPE *message); //! helper function
-int implMonitorSingle(CAN_MSG_TYPE *message); //! helper function
+void implMonitorSingle(CAN_MSG_TYPE *message); //! helper function
 int getSetupInfo(CAN_MSG_TYPE *message);      //!< Called to get the AMBSI1 <-> ARCOM link/setup information
 int getVersionInfo(CAN_MSG_TYPE *message);    //!< Called to get firmware version informations
 int getReservedMsg(CAN_MSG_TYPE *message);    //!< Monitor timers and debugging info from this firmware
@@ -177,7 +182,6 @@ static bit idata initialized;	// This gets set to true after CAN callbacks for t
 void main(void) {
     CAN_MSG_TYPE idata *queueRead_p;
     unsigned long timer;
-    int ret;
 
     // This gets set to true after GPIO ports and CAN calbacks for the AMBSI board are initialized:
     ready = FALSE;
@@ -230,6 +234,16 @@ void main(void) {
 	/* Read the ambient temperature once.  This will be read occasionally in the main loop below. */
 	ds1820_get_temp(&ambient_temp_data[1], &ambient_temp_data[0], &ambient_temp_data[2], &ambient_temp_data[3]);
 
+    /*
+    *  P2.3 edge interrupt
+    *  GPIO falling edge transition
+    *  GPIO interrupt priority level(ILVL) = 13
+    *  GPIO interrupt group level (GLVL) = 3
+    */
+    CCM0 = 0x2000;
+    CC3IC = 0x0077;
+    CC3IR = 0;
+
 	/* globally enable interrupts */
     amb_start();
 
@@ -268,13 +282,15 @@ void main(void) {
                 // Change dirn back from CAN_MONITOR_QUEUED:
                 queueRead_p -> dirn = CAN_MONITOR;
                 // Try 1:
-                ret = implMonitorSingle(queueRead_p);
-                if (ret != 0) {
+                implMonitorSingle(queueRead_p);
+                while (waitingArcom);
+                if (monitorTimeout) {
                     // Retry once:
-                    ret = implMonitorSingle(queueRead_p);
+                    implMonitorSingle(queueRead_p);
+                    while (waitingArcom);
                 }
                 // Send the reply if successful:
-                if (ret == 0) {
+                if (!monitorTimeout) {
                     amb_transmit_monitor(queueRead_p);
                 }
             }
@@ -421,6 +437,31 @@ int getReservedMsg(CAN_MSG_TYPE *message) {
             message -> len = 3;
             break;
 
+        case INSPECT_CURRENT_MON_DATA:
+            // Return the data length (uchar) and message direction (uint) from the message most recently read from the queue.
+            message->data[0] = currentArcomMonitor->data[0];
+            message->data[1] = currentArcomMonitor->data[1];
+            message->data[2] = currentArcomMonitor->data[2];
+            message->data[3] = currentArcomMonitor->data[3];
+            message->data[4] = currentArcomMonitor->data[4];
+            message->data[6] = currentArcomMonitor->data[5];
+            message->data[6] = currentArcomMonitor->data[6];
+            message->data[7] = currentArcomMonitor->data[7];
+            message->len = 8;
+            break;
+        case INSPECT_CURRENT_MON_HEAD:
+            // Return the data length (uchar) and message direction (uint) from the message most recently read from the queue.
+            message->data[0] = currentArcomMonitor->len;
+            message->data[1] = currentArcomMonitor->dirn;
+            message->data[2] = (unsigned char)(currentArcomMonitor->relative_address);
+            message->data[3] = (unsigned char)(currentArcomMonitor->relative_address >> 8);
+            message->data[4] = (unsigned char)(currentArcomMonitor->relative_address >> 16);
+            message->data[5] = (unsigned char)(currentArcomMonitor->relative_address >> 24);
+            message->data[6] = monitorTimeout;
+            message->data[7] = 0;
+            message->len = 8;
+            break;
+
         default:
             message -> data[0] = (unsigned char) 0;
             message -> data[1] = (unsigned char) 0;
@@ -477,7 +518,9 @@ int getSetupInfo(CAN_MSG_TYPE *message) {
 	myCANMessage.dirn=CAN_MONITOR; // Direction: monitor
 	myCANMessage.len=0;	// Size: 0
 	myCANMessage.relative_address=GET_SPECIAL_MONITOR_RCAS; // 0x20003 -> RCA: special address to retrieve the special monitor RCAs informations
-	if (implMonitorSingle(&myCANMessage)) { // Send the monitor request, but don't send response on CAN bus.
+    implMonitorSingle(&myCANMessage); // Send the monitor request
+    while (waitingArcom); // Wait for ARCOM response
+    if (monitorTimeout) { // Check if the response was a timeout
 		message->data[0]=0x07; // Error 0x07: Timeout while forwarding the message to the ARCOM board
 		return -1;
 	}
@@ -504,7 +547,9 @@ int getSetupInfo(CAN_MSG_TYPE *message) {
 	myCANMessage.dirn=CAN_MONITOR; // Direction: monitor
 	myCANMessage.len=0;	// Size: 0
 	myCANMessage.relative_address=GET_SPECIAL_CONTROL_RCAS; // 0x20004 -> RCA: special address to retrieve the special control RCAs informations
-    if (implMonitorSingle(&myCANMessage)) { // Send the monitor request, but don't send response on CAN bus.
+    implMonitorSingle(&myCANMessage); // Send the monitor request
+    while (waitingArcom); // Wait for ARCOM response
+    if (monitorTimeout) { // Check if the response was a timeout
         message->data[0]=0x07; // Error 0x07: Timeout while forwarding the message to the ARCOM board
         /* Unregister previously registered functions */
         amb_unregister_last_function(); // SPECIAL MONITOR RCAs
@@ -532,7 +577,9 @@ int getSetupInfo(CAN_MSG_TYPE *message) {
 	myCANMessage.dirn=CAN_MONITOR; // Direction: monitor
 	myCANMessage.len=0;	// Size: 0
 	myCANMessage.relative_address=GET_MONITOR_RCAS; // 0x20005 -> RCA: special address to retrieve the monitor RCAs informations
-    if (implMonitorSingle(&myCANMessage)) { // Send the monitor request, but don't send response on CAN bus.
+    implMonitorSingle(&myCANMessage); // Send the monitor request
+    while (waitingArcom); // Wait for ARCOM response
+    if (monitorTimeout) { // Check if the response was a timeout
         message->data[0]=0x07; // Error 0x07: Timeout while forwarding the message to the ARCOM board
         /* Unregister previously registered functions */
         amb_unregister_last_function(); // SPECIAL CONTROL RCAs
@@ -561,7 +608,9 @@ int getSetupInfo(CAN_MSG_TYPE *message) {
 	myCANMessage.dirn=CAN_MONITOR; // Direction: monitor
 	myCANMessage.len=0;	// Size: 0
 	myCANMessage.relative_address=GET_CONTROL_RCAS; // 0x20006 -> RCA: special address to retrieve the special control RCAs informations
-    if (implMonitorSingle(&myCANMessage)) { // Send the monitor request, but don't send response on CAN bus.
+    implMonitorSingle(&myCANMessage); // Send the monitor request
+    while (waitingArcom); // Wait for ARCOM response
+    if (monitorTimeout) { // Check if the response was a timeout
         message->data[0]=0x07; // Error 0x07: Timeout while forwarding the message to the ARCOM board
         /* Unregister previously registered functions */
         amb_unregister_last_function(); // MONITOR RCAs
@@ -699,12 +748,11 @@ int implControlSingle(CAN_MSG_TYPE *message) {
     \return
         - 0 -> Everything went OK
         - -1 -> Time out during CAN message forwarding.  Don't send the reply */
-int implMonitorSingle(CAN_MSG_TYPE *message) {
-    unsigned char counter;
-    unsigned char timeout;
+void implMonitorSingle(CAN_MSG_TYPE *message) {
 
     /* Trigger interrupt */
     EPPS_INTERRUPT = 1;
+    currentArcomMonitor = message; // Set pointer to global current monitor request
 
     //Uncomment to debug timers:
     //RESET_MON_TIMERS
@@ -720,7 +768,7 @@ int implMonitorSingle(CAN_MSG_TYPE *message) {
         // FAILED TO SEND
         // Untrigger interrupt:
         EPPS_INTERRUPT = 0;
-        return -1;
+        return;
     }
 
     IMPL_HANDSHAKE(monTimer2)
@@ -742,25 +790,33 @@ int implMonitorSingle(CAN_MSG_TYPE *message) {
 
     /* Set port to receive data */
     DP7 = 0x00;
+    waitingArcom = TRUE;                            // Set status to waiting for ARCOM response
+    return;
+}
 
-    /* Receive monitor payload size */
-    IMPL_HANDSHAKE(monTimer6)
-    message->len = (ubyte) P7;                      // Read data from port
+void amb_test_cc3io() interrupt CC3INT = 0x13 {
+    unsigned char counter;
+    if (!waitingArcom) return;                      // Check if we are waiting for ARCOM response
+    currentArcomMonitor->len = (ubyte)P7;           // Read data from port
     TOGGLE_NWAIT;                                   // Trigger next write by host
 
-    /* Detect timeout or error receiving payload size */
-    timeout = FALSE;
-    if (monTimer6 == 0 || message->len > MAX_CAN_MSG_PAYLOAD) {
-        timeout = TRUE;
+    /* Error receiving payload size */
+    monitorTimeout = FALSE;
+    if (currentArcomMonitor->len > MAX_CAN_MSG_PAYLOAD) {
+        DP7 = 0xFF;
+        EPPS_INTERRUPT = 0;
+        monitorTimeout = TRUE;                      // Set timeout status
+        waitingArcom = FALSE;                       // Finished waiting for ARCOM
+        return;                                     // Exit from ISR
     }
 
     /* Get the payload */
-    for (counter = 0; !timeout && (counter < message -> len); counter++) {
+    for (counter = 0; !monitorTimeout && (counter < currentArcomMonitor->len); counter++) {
         IMPL_HANDSHAKE(monTimer7)
-        message->data[counter] = (ubyte) P7;        // Read data from port
+        currentArcomMonitor->data[counter] = (ubyte)P7;  // Read data from port
         TOGGLE_NWAIT;                               // Trigger next write by host
         if (monTimer7 == 0) {
-            timeout = TRUE;
+            monitorTimeout = TRUE;                  // Finished waiting for ARCOM
         }
     }
     // Set port to transmit data:
@@ -769,10 +825,7 @@ int implMonitorSingle(CAN_MSG_TYPE *message) {
     /* Untrigger interrupt */
     EPPS_INTERRUPT = 0;
 
-    /* Handle timeout */
-    if (timeout)
-        return -1;  // caller should not send a reply in this case.
-    else
-        return 0;
+    waitingArcom = FALSE;                           // Finished waiting for ARCOM
+    return;
 }
 
