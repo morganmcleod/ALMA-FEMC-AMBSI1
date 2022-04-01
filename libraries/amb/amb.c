@@ -391,10 +391,10 @@ int amb_setup_CAN_hw(){
 
 	    /*
 		 *  enable CAN interrupt
-  		 *  CAN interrupt priority level(ILVL) = 13
+  		 *  CAN interrupt priority level(ILVL) = 12
   	 	 *  CAN interrupt group level (GLVL) = 3
     	 */
-  		XP0IC = 0x0077;
+  		XP0IC = 0x0073;
 
 	  	/* ------------ CAN Control/Status Register --------------
   		 *  reset CCE and INIT
