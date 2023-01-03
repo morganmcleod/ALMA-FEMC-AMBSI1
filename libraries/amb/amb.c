@@ -32,7 +32,10 @@
 #define HW_VERSION_MINOR 6
 
 /* REVISION HISTORY */
-/* Version 01.04.00 - Morgan McLeod mmcleod@nrao.edu
+/* Version 01.04.01 - Alejandro Saez Alejandro.Saez@alma.cl
+                      Added test points tp1, tp2 for debugging with a logic analyzer
+                      Added function recoverCanHw() for recovery from BUSOFF condition  
+ * Version 01.04.00 - Morgan McLeod mmcleod@nrao.edu
                       Added slave_node.num_message_lost at 0x30006
                       to explicitly count Message Lost errors in CAN object 15.
                       Deleted unimplemented function prototypes from amb.h
@@ -122,8 +125,8 @@ static int		amb_get_serial_number();
 static int		amb_setup_CAN_hw();
 static void		amb_handle_transaction();
 static void		amb_transmit_monitor();
-sbit  tp1				= P8^6;	  // output	
-sbit  tp2				= P8^5;	  // output	
+sbit  tp1 = P8^6;	  // output	
+sbit  tp2 = P8^5;	  // output	
 
 /* All pertinent slave data */
 

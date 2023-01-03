@@ -1,8 +1,7 @@
 /*
  ****************************************************************************
- # $Id: amb.h,v 1.9 2004/11/18 19:57:56 avaccari Exp $
  #
- # Copyright (C) 1999
+ # Copyright (C) 2022
  # Associated Universities, Inc. Washington DC, USA.
  #
  # Correspondence concerning ALMA should be addressed as follows:
@@ -112,8 +111,12 @@
 	 * interrupts on the C167. 
 	 */
 	extern int amb_start();
-	extern void dsply_CAN_struct_slave_node (void);
+
+	/** 
+	 * Reinitialize the CAN bus, for recovery from BUSOFF error condition.
+	*/
 	extern void recoverCanHw(void);
+
 	/**
 	 * Utility functions for accessing internal counters and information 
 	 */

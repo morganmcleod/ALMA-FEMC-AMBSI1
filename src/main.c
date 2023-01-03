@@ -42,6 +42,7 @@
 #define GET_TIMERS_RCA              0x20020L    //!< Get monitor and command timing countdown registers.
 #define GET_MON_TIMERS2_RCA         0x20021L    //!< DEPRECATED
 #define GET_PPORT_STATE             0x20023L    //!< Get the state of the parallel port lines and other state info
+#define GET_CAN_BUSOFF_COUNTER      0x20024L    //!< Get the number of BUSOFF events detected and recovered
 #define LAST_AMBSI1_RESERVED        0x2003FL    //!< Highest special RCA served by this firmware not forwarded to ARCOM.
 
 /* Version Info */
@@ -88,9 +89,9 @@ sbit  SPPC_NSELECT      = P2^6;
 sbit  EPPS_INTERRUPT    = P2^7;   // output
 sbit  EPPS_NWAIT        = P2^8;   // output
 sbit  SPPS_SELECTIN     = P2^10;  // output
-sbit  tp0				= P8^7;	  // output	
-sbit  tp1				= P8^6;	  // output	
-sbit  tp2				= P8^5;	  // output	
+sbit  tp0               = P8^7;	  // output	
+sbit  tp1               = P8^6;	  // output	
+sbit  tp2               = P8^5;	  // output	
 
 /* Separate timers for each phase of monitor and control transaction */
 static unsigned int idata monTimer1, monTimer2, cmdTimer;
@@ -194,11 +195,6 @@ void main(void) {
 	T3R	 	= 1;
 	
 
-
-
-
-
-
     /* Register callback for the special setup message */
 	if (amb_register_function(GET_SETUP_INFO, GET_SETUP_INFO, getSetupInfo) != 0)
 		return;
@@ -247,9 +243,7 @@ int getVersionInfo(CAN_MSG_TYPE *message){
 	message->data[0]=VERSION_MAJOR;
 	message->data[1]=VERSION_MINOR;
 	message->data[2]=VERSION_PATCH;
-	message->data[3]=canBusOffCounter&0x00ff;	
-	message->data[4]=(canBusOffCounter&0xff00)>>8;
-	message->len=5;
+	message->len=3;
 	return 0;
 }
 
@@ -429,6 +423,17 @@ int getReservedMsg(CAN_MSG_TYPE *message) {
             message -> data[7] = (unsigned char) initialized;
             message -> len = 8;
             break;
+		case GET_CAN_BUSOFF_COUNTER:
+			message -> data[0]=canBusOffCounter&0x00ff;	
+			message -> data[1]=(canBusOffCounter&0xff00)>>8;
+            message -> data[2] = (unsigned char) 0;
+            message -> data[3] = (unsigned char) 0;
+            message -> data[4] = (unsigned char) 0;
+            message -> data[5] = (unsigned char) 0;
+            message -> data[6] = (unsigned char) 0;
+            message -> data[7] = (unsigned char) 0;
+            message -> len = 2;
+			break;
         default:
             message -> data[0] = (unsigned char) 0;
             message -> data[1] = (unsigned char) 0;
