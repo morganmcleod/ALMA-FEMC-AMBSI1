@@ -1,12 +1,11 @@
 /*
  *****************************************************************************
- # $Id: amb.c,v 1.17 2008/03/05 19:44:57 avaccari Exp $
  #
- # Copyright (C) 1999
+ # Copyright (C) 1999-2022
  # Associated Universities, Inc. Washington DC, USA.
  #
  # Correspondence concerning ALMA should be addressed as follows:
- #        Internet email: mmaswgrp@nrao.edu
+ #        Internet email: feic_na@nrao.edu
  ****************************************************************************
  *
  *  AMB.C 
@@ -26,14 +25,21 @@
 
 /* Version of SOFTWARE */
 #define SW_VERSION_MAJOR 1
-#define SW_VERSION_MINOR 2
-#define SW_VERSION_PATCH 3
+#define SW_VERSION_MINOR 4
+#define SW_VERSION_PATCH 1
 /* Version of HARDWARE */
 #define HW_VERSION_MAJOR 1
 #define HW_VERSION_MINOR 6
 
 /* REVISION HISTORY */
-/*
+/* Version 01.04.00 - Morgan McLeod mmcleod@nrao.edu
+                      Added slave_node.num_message_lost at 0x30006
+                      to explicitly count Message Lost errors in CAN object 15.
+                      Deleted unimplemented function prototypes from amb.h
+ * Version 01.03.00...01.03.03 - Not released - Morgan McLeod mmcleod@nrao.edu
+                      Separate monitor response from request handling to
+                      message queueing in client code.
+                      Async read of ambient temperature.
  * Version 01.01.02 - Released as Ver_1_1_2
            01.02.03   Patch by Andrea Vaccari - NRAO NTC
 		   			  Changed code to assure that any RCA is not serviced more than once in
@@ -69,7 +75,6 @@
  /* Include Dallas Semiconductor support for C167 */
 
 #include "..\..\libraries\ds1820\ds1820.h"
-
 
 
 /* Definitions of CAN controller structure */
@@ -117,6 +122,8 @@ static int		amb_get_serial_number();
 static int		amb_setup_CAN_hw();
 static void		amb_handle_transaction();
 static void		amb_transmit_monitor();
+sbit  tp1				= P8^6;	  // output	
+sbit  tp2				= P8^5;	  // output	
 
 /* All pertinent slave data */
 
@@ -132,6 +139,7 @@ static void		amb_transmit_monitor();
 	uword		num_errors;			/* Number of CAN errors */
 	ubyte		last_slave_error;	/* Last internal slave error */
 	ulong		num_transactions;	/* Number of completed transactions */
+	ulong       num_message_lost;   /* Number of message lost (MSGLST) errors for CAN object 15 */
 
 	ubyte		identify_mode;		/* True when responding to identify broadcast */
 
@@ -176,6 +184,7 @@ int amb_init_slave(void *cb_ops_memory){
 	slave_node.num_errors = 0;
 	slave_node.last_slave_error = 0x0;
 	slave_node.num_transactions = 0;
+	slave_node.num_message_lost = 0;
 
 	slave_node.identify_mode = FALSE;
 	
@@ -427,7 +436,7 @@ int amb_setup_CAN_hw(){
 	void amb_can_isr(void) interrupt XP0INT{
   	uword uwIntID;
   	uword uwStatus;
-
+	tp1=1;
 	  	while (uwIntID = C1IR & 0x00ff) {
 	    	switch (uwIntID & 0x00ff) {
 	     		case 1:  /* Status Change Interrupt
@@ -568,6 +577,7 @@ int amb_setup_CAN_hw(){
 						 * do something wih them  Increment error, because we missed
 						 * a message 
 						 */
+           			 	slave_node.num_message_lost++;
 						slave_node.num_errors++;
 
 						if (slave_node.last_slave_error != DUP_SLAVE_ADDR_E) {
@@ -634,6 +644,7 @@ int amb_setup_CAN_hw(){
     		        break;
 			}
 		}
+	tp1=0;
 	}
 
 /* Routine to check if a callback should be run */
@@ -743,6 +754,16 @@ void amb_handle_transaction(){
 				slave_node.num_transactions++;
 				return;
 				break;
+            case 0x30006: /* Number of message lost errors on CAN object 15 */
+                current_msg.len = 4;
+                current_msg.data[0] = (ubyte) (slave_node.num_message_lost>>24);
+                current_msg.data[1] = (ubyte) (slave_node.num_message_lost>>16);
+                current_msg.data[2] = (ubyte) (slave_node.num_message_lost>>8);
+                current_msg.data[3] = (ubyte) (slave_node.num_message_lost);
+                amb_transmit_monitor();
+                slave_node.num_transactions++;
+                return;
+                break;
 		}
 	}
 
@@ -802,3 +823,17 @@ void amb_transmit_monitor(){
 }
 
 
+void recoverCanHw(void)
+{
+		tp2		= 1;
+		IEN 	= 0;	 	/* disable interrupts */
+  		C1CSR  	= 0x0041;  	/* set INIT and CCE */
+  		C1BTR  	= 0x3440;  	/* set Bit Timing Register */
+  		C1GMS  	= 0xE0FF;  	/* set Global Mask Short Register */
+  		C1UGML 	= 0xFFFF;  	/* set Upper Global Mask Long Register */
+  		C1LGML 	= 0xF8FF;  	/* set Lower Global Mask Long Register */
+  		XP0IC 	= 0x0077;
+  		C1CSR 	= 0x000A;  		
+		IEN 	= 1;		/* enable interrupts */
+		tp2		= 0;
+}

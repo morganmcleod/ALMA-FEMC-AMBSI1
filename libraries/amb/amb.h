@@ -112,7 +112,8 @@
 	 * interrupts on the C167. 
 	 */
 	extern int amb_start();
-
+	extern void dsply_CAN_struct_slave_node (void);
+	extern void recoverCanHw(void);
 	/**
 	 * Utility functions for accessing internal counters and information 
 	 */
