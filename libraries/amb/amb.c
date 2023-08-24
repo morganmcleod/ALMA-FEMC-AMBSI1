@@ -26,7 +26,7 @@
 /* Version of SOFTWARE */
 #define SW_VERSION_MAJOR 1
 #define SW_VERSION_MINOR 4
-#define SW_VERSION_PATCH 1
+#define SW_VERSION_PATCH 2
 /* Version of HARDWARE */
 #define HW_VERSION_MAJOR 1
 #define HW_VERSION_MINOR 6
@@ -79,6 +79,11 @@
 
 #include "..\..\libraries\ds1820\ds1820.h"
 
+/* Test points for BUSOFF handler */
+sbit  tp0               = P8^7;	  // output	
+sbit  tp1               = P8^6;	  // output	
+sbit  tp2               = P8^5;	  // output	
+
 
 /* Definitions of CAN controller structure */
 
@@ -125,8 +130,6 @@ static int		amb_get_serial_number();
 static int		amb_setup_CAN_hw();
 static void		amb_handle_transaction();
 static void		amb_transmit_monitor();
-sbit  tp1 = P8^6;	  // output	
-sbit  tp2 = P8^5;	  // output	
 
 /* All pertinent slave data */
 
@@ -142,7 +145,8 @@ sbit  tp2 = P8^5;	  // output
 	uword		num_errors;			/* Number of CAN errors */
 	ubyte		last_slave_error;	/* Last internal slave error */
 	ulong		num_transactions;	/* Number of completed transactions */
-	ulong       num_message_lost;   /* Number of message lost (MSGLST) errors for CAN object 15 */
+	ulong		num_message_lost;   /* Number of message lost (MSGLST) errors for CAN object 15 */
+	ulong		num_busoff; 
 
 	ubyte		identify_mode;		/* True when responding to identify broadcast */
 
@@ -188,9 +192,19 @@ int amb_init_slave(void *cb_ops_memory){
 	slave_node.last_slave_error = 0x0;
 	slave_node.num_transactions = 0;
 	slave_node.num_message_lost = 0;
+	slave_node.num_busoff = 0;
 
 	slave_node.identify_mode = FALSE;
 	
+/* 1.2.6, 1.2.7 experimental: Initialize Timer 3 */
+	T3CON 	= 0x0000;	
+	T3 		= 0x8000;
+	T3IC 	= 0x0044;
+	T3R	 	= 1;
+
+/* 1.2.6, 1.2.7 experimental: set up test points on port 8 */
+	DP8=0xFF;
+
 /* Setup the CAN hardware */
 	return amb_setup_CAN_hw();
 }
@@ -767,6 +781,16 @@ void amb_handle_transaction(){
                 slave_node.num_transactions++;
                 return;
                 break;
+            case 0x30007: /* CAN BUSOFF error counter */
+                current_msg.len = 4;
+                current_msg.data[0] = (ubyte) (slave_node.num_busoff>>24);
+                current_msg.data[1] = (ubyte) (slave_node.num_busoff>>16);
+                current_msg.data[2] = (ubyte) (slave_node.num_busoff>>8);
+                current_msg.data[3] = (ubyte) (slave_node.num_busoff);
+                amb_transmit_monitor();
+                slave_node.num_transactions++;
+                return;
+                break;				
 		}
 	}
 
@@ -825,6 +849,20 @@ void amb_transmit_monitor(){
   		CAN_OBJ[2].MCR = 0xe7ff;  /* set TXRQ,reset CPUUPD */
 }
 
+void GT1_viIsrTmr3(void) interrupt 0x23 {
+	T3 = 0xE000;
+	tp2=1;
+
+	if (C1CSR & 0x8000)
+	{
+		tp0=1;
+		recoverCanHw();
+		slave_node.num_busoff++;
+		tp0=0;
+		IEN = 0;
+	}
+	tp2=0;
+}
 
 void recoverCanHw(void)
 {

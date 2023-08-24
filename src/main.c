@@ -42,13 +42,12 @@
 #define GET_TIMERS_RCA              0x20020L    //!< Get monitor and command timing countdown registers.
 #define GET_MON_TIMERS2_RCA         0x20021L    //!< DEPRECATED
 #define GET_PPORT_STATE             0x20023L    //!< Get the state of the parallel port lines and other state info
-#define GET_CAN_BUSOFF_COUNTER      0x20024L    //!< Get the number of BUSOFF events detected and recovered
 #define LAST_AMBSI1_RESERVED        0x2003FL    //!< Highest special RCA served by this firmware not forwarded to ARCOM.
 
 /* Version Info */
 #define VERSION_MAJOR 01	//!< Major Version
 #define VERSION_MINOR 02	//!< Minor Revision
-#define VERSION_PATCH 06	//!< Patch Level
+#define VERSION_PATCH 07	//!< Patch Level
 
 /* Uses GPIO ports */
 #include <reg167.h>
@@ -89,9 +88,6 @@ sbit  SPPC_NSELECT      = P2^6;
 sbit  EPPS_INTERRUPT    = P2^7;   // output
 sbit  EPPS_NWAIT        = P2^8;   // output
 sbit  SPPS_SELECTIN     = P2^10;  // output
-sbit  tp0               = P8^7;	  // output	
-sbit  tp1               = P8^6;	  // output	
-sbit  tp2               = P8^5;	  // output	
 
 /* Separate timers for each phase of monitor and control transaction */
 static unsigned int idata monTimer1, monTimer2, cmdTimer;
@@ -111,9 +107,6 @@ static unsigned int idata monTimer1, monTimer2, cmdTimer;
 /* Macro to toggle WAIT high then low */
 #define TOGGLE_NWAIT { EPPS_NWAIT = 1; EPPS_NWAIT = 0; }
 
-/* Locations of CAN controller registers */
-#define C1CSR   (*((uword volatile sdata *) 0xEF00)) /* Control/Status Register */
-
 /* RCAs address ranges */
 static unsigned long idata lowestMonitorRCA,highestMonitorRCA,
 						   lowestControlRCA,highestControlRCA,
@@ -127,29 +120,9 @@ static CAN_MSG_TYPE idata myCANMessage;
 static bit idata ready;			// is the communication between the ARCOM and AMBSI ready?
 static bit idata initialized;	// have the RCAs been initialized?
 
-
-
-static unsigned int  canBusOffCounter=0;
-
 //! MAIN
 /*! Takes care of initializing the AMBSI1, the AMB CAN library and globally enables interrupts.
     Since version 1.2.0: also performs AMBSI1 to ARCOM link setup. */
-
-void GT1_viIsrTmr3(void) interrupt 0x23 {
-
-T3 	= 0xE000;
-tp2=1;
-
-	if (C1CSR & 0x8000)
-	{
-		tp0=1;
-		recoverCanHw();
-		canBusOffCounter++;
-		tp0=0;
-		IEN = 0;
-	}
-tp2=0;
-}
 
 void main(void) {
     unsigned long timer;
@@ -185,15 +158,6 @@ void main(void) {
 	P2=0x0000;
 	SPPS_SELECTIN=1;
 	DP2=0x0580; 
-	DP8=0xFF;
-
-	/* Initialize Timer 3 */
-
-	T3CON 	= 0x0000;	
-	T3 		= 0x8000;
-	T3IC 	= 0x0044;
-	T3R	 	= 1;
-	
 
     /* Register callback for the special setup message */
 	if (amb_register_function(GET_SETUP_INFO, GET_SETUP_INFO, getSetupInfo) != 0)
@@ -423,17 +387,6 @@ int getReservedMsg(CAN_MSG_TYPE *message) {
             message -> data[7] = (unsigned char) initialized;
             message -> len = 8;
             break;
-		case GET_CAN_BUSOFF_COUNTER:
-			message -> data[0]=canBusOffCounter&0x00ff;	
-			message -> data[1]=(canBusOffCounter&0xff00)>>8;
-            message -> data[2] = (unsigned char) 0;
-            message -> data[3] = (unsigned char) 0;
-            message -> data[4] = (unsigned char) 0;
-            message -> data[5] = (unsigned char) 0;
-            message -> data[6] = (unsigned char) 0;
-            message -> data[7] = (unsigned char) 0;
-            message -> len = 2;
-			break;
         default:
             message -> data[0] = (unsigned char) 0;
             message -> data[1] = (unsigned char) 0;

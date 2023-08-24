@@ -1,5 +1,8 @@
 RELEASE/REVISION HISTORY
 
+2023-08-24  001.002.007
+    moved BUSOFF recovey code into amb.c library.  BUSOFF counter is now 0x30007
+
 2023-01-03  001.002.006
     Merged from Alejandro Saez' version which recovers the CAN bus from BUSOFF conditions,
     based on checking the CAN status register in an interval timer handler.
