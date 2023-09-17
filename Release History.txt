@@ -1,5 +1,9 @@
 RELEASE/REVISION HISTORY
 
+2023-09-17  001.002.008
+    Message Object 15 now checks if NEWDAT is set before processing.
+    This fixes the serial number being sent randomly.
+
 2023-08-24  001.002.007
     moved BUSOFF recovey code into amb.c library.  BUSOFF counter is now 0x30007
 

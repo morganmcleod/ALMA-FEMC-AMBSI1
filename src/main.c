@@ -47,7 +47,7 @@
 /* Version Info */
 #define VERSION_MAJOR 01	//!< Major Version
 #define VERSION_MINOR 02	//!< Minor Revision
-#define VERSION_PATCH 07	//!< Patch Level
+#define VERSION_PATCH 08	//!< Patch Level
 
 /* Uses GPIO ports */
 #include <reg167.h>
