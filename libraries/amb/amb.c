@@ -581,37 +581,39 @@ int amb_setup_CAN_hw(){
             		break;
 
 				case 2: /* Message Object 15 Interrupt */
-    	     		if ((CAN_OBJ[14].MCR & 0x0c00) == 0x0800) { /* if MSGLST set */
-	        	    	/* 
-						 * Indicates that the CAN controller has stored a new
-   		     	    	 * message into object 15, while NEWDAT was still set,
-        	    	 	 * ie. the previously stored message is lost.
-					 	 */
-           			 	CAN_OBJ[14].MCR = 0xf7ff;    /* reset MSGLST */
+                    if ((CAN_OBJ[14].MCR & 0x0300) == 0x0200) {    /* if NEWDAT set */
+                        if ((CAN_OBJ[14].MCR & 0x0c00) == 0x0800) { /* if MSGLST set */
+                            /* 
+                            * Indicates that the CAN controller has stored a new
+                            * message into object 15, while NEWDAT was still set,
+                            * ie. the previously stored message is lost.
+                            */
+                            CAN_OBJ[14].MCR = 0xf7ff;    /* reset MSGLST */
 
-						/* 
-						 * Messages in this object are probably M&C data, so 
-						 * do something wih them  Increment error, because we missed
-						 * a message 
-						 */
-           			 	slave_node.num_message_lost++;
-						slave_node.num_errors++;
+                            /* 
+                            * Messages in this object are probably M&C data, so 
+                            * do something wih them  Increment error, because we missed
+                            * a message 
+                            */
+                            slave_node.num_message_lost++;
+                            slave_node.num_errors++;
 
-						if (slave_node.last_slave_error != DUP_SLAVE_ADDR_E) {
-							amb_handle_transaction();
-						}
-    	     		} else {
-        	       		/* 
-						 * The CAN controller has stored a new message
-        	   	     	 * into this object.
-						 * Messages in this object are probably M&C data, so
-						 * do something wih them.
-						 */
-						if (slave_node.last_slave_error != DUP_SLAVE_ADDR_E) {
-							amb_handle_transaction();
-						}
-            		}
-           			CAN_OBJ[14].MCR = 0x7dfd;      /* release buffer */
+                            if (slave_node.last_slave_error != DUP_SLAVE_ADDR_E) {
+                                amb_handle_transaction();
+                            }
+                        } else {
+                            /* 
+                            * The CAN controller has stored a new message
+                            * into this object.
+                            * Messages in this object are probably M&C data, so
+                            * do something wih them.
+                            */
+                            if (slave_node.last_slave_error != DUP_SLAVE_ADDR_E) {
+                                amb_handle_transaction();
+                            }
+                        }
+                        CAN_OBJ[14].MCR = 0x7dfd;      /* release buffer */
+                    }
             		break;
 
 				case 3: /* Message Object 1 Interrupt */

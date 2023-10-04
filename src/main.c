@@ -45,9 +45,9 @@
 #define LAST_AMBSI1_RESERVED        0x2003FL    //!< Highest special RCA served by this firmware not forwarded to ARCOM.
 
 /* Version Info */
-#define VERSION_MAJOR 01	//!< Major Version
-#define VERSION_MINOR 02	//!< Minor Revision
-#define VERSION_PATCH 07	//!< Patch Level
+#define VERSION_MAJOR 1		//!< Major Version
+#define VERSION_MINOR 2		//!< Minor Revision
+#define VERSION_PATCH 8		//!< Patch Level
 
 /* Uses GPIO ports */
 #include <reg167.h>
