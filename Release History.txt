@@ -1,5 +1,34 @@
 RELEASE/REVISION HISTORY
 
+2023-10-16  001.002.009
+    Based on 1.2.5 (contains no changes from 1.2.6, 1.2.7, 1.2.8)
+    EPP_MAX_TIMEOUT 2000 clock cycles instead of 1000
+
+2023-09-17  001.002.008
+    Message Object 15 now checks if NEWDAT is set before processing.
+    This fixes the serial number being sent randomly.
+
+2023-08-24  001.002.007
+    moved BUSOFF recovey code into amb.c library.  BUSOFF counter is now 0x30007
+
+2023-01-03  001.002.006
+    Merged from Alejandro Saez' version which recovers the CAN bus from BUSOFF conditions,
+    based on checking the CAN status register in an interval timer handler.
+
+2022-03-14  001.002.005 see FEND-40.04.03.03-0021-A-PRO for details
+    Fixed a buffer overflow which happens during start-up:  Not enough speace was allocated
+    in static CALLBACK_STRUCT idata cb_memory[8];
+    Delete symbol FULL_HANDSHAKE and all the alternative code.
+    Added handlers for several new monitor points:
+    GET_TIMERS_RCA = 0x20020
+    GET_TIMERS2_RCA = 0x20021
+    GET_PPORT_STATE = 0x20023
+    These are for debugging purposes only and have no impact on the main functionality of the firmware.
+    Don't send responses to ALMA SW for monitor messages not initiated by ALMA SW (during startup.)
+    Delete all "handshaking" from the parallel port link setup.  It was never working as intended anyway.
+    Rename all pin definition variables to match the names and semantics as used in the ARCOM firmware. 
+    Add a pin definition for nSelect, which was missing.
+
 2018-10-01  001.002.000
     Removed DEBUG symbol.  Previously it was always defined, therefore meaningless.
     FULL_HANDSHAKE is always defined.  Implemented in macro IMPL_HANDSHAKE.

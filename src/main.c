@@ -45,9 +45,9 @@
 #define LAST_AMBSI1_RESERVED        0x2003FL    //!< Highest special RCA served by this firmware not forwarded to ARCOM.
 
 /* Version Info */
-#define VERSION_MAJOR 01	//!< Major Version
-#define VERSION_MINOR 02	//!< Minor Revision
-#define VERSION_PATCH 05	//!< Patch Level
+#define VERSION_MAJOR 1	//!< Major Version
+#define VERSION_MINOR 2	//!< Minor Revision
+#define VERSION_PATCH 9	//!< Patch Level
 
 /* Uses GPIO ports */
 #include <reg167.h>
@@ -95,8 +95,8 @@ static unsigned int idata monTimer1, monTimer2, cmdTimer;
 /* Macros to implement EPP handshake */
 
 //! Timeout waiting for EPP ready when sending or receiving bytes
-#define EPP_MAX_TIMEOUT 1000
-// about 1 millisecond based on 0xFFFF = 70 ms
+#define EPP_MAX_TIMEOUT 2000
+// about 300 microseconds
 // This is intentionally much longer than it should ever take because recovery from timeouts is messy.
 
 //! Wait for Data Strobe to go low and detect timeout
