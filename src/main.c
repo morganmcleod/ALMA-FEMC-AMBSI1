@@ -392,8 +392,8 @@ int getReservedMsg(CAN_MSG_TYPE *message) {
 		case GET_ARCOM_TIMEOUTS:
 			message -> data[0] = (unsigned char) (arcomMonTimeouts >> 8);
             message -> data[1] = (unsigned char) (arcomMonTimeouts);
-			message -> data[0] = (unsigned char) (arcomCmdTimeouts >> 8);
-            message -> data[1] = (unsigned char) (arcomCmdTimeouts);			
+			message -> data[2] = (unsigned char) (arcomCmdTimeouts >> 8);
+            message -> data[3] = (unsigned char) (arcomCmdTimeouts);			
             message -> data[4] = (unsigned char) 0;
             message -> data[5] = (unsigned char) 0;
             message -> data[6] = (unsigned char) 0;
