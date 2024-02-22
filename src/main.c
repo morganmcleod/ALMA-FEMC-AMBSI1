@@ -40,14 +40,14 @@
 // We carve out some of the special monitor RCAs for timers and debugging of this firmware:
 #define BASE_AMBSI1_RESERVED        0x20020L    //!< Lowest special RCA served by this firmware not forwarded to ARCOM.
 #define GET_TIMERS_RCA              0x20020L    //!< Get monitor and command timing countdown registers.
-#define GET_MON_TIMERS2_RCA         0x20021L    //!< DEPRECATED
+#define GET_ARCOM_TIMEOUTS          0x20021L    //!< Get the counter of messages which could not be sent to ARCOM
 #define GET_PPORT_STATE             0x20023L    //!< Get the state of the parallel port lines and other state info
 #define LAST_AMBSI1_RESERVED        0x2003FL    //!< Highest special RCA served by this firmware not forwarded to ARCOM.
 
 /* Version Info */
-#define VERSION_MAJOR 1	//!< Major Version
-#define VERSION_MINOR 2	//!< Minor Revision
-#define VERSION_PATCH 9	//!< Patch Level
+#define VERSION_MAJOR 1  //!< Major Version
+#define VERSION_MINOR 2  //!< Minor Revision
+#define VERSION_PATCH 10 //!< Patch Level
 
 /* Uses GPIO ports */
 #include <reg167.h>
@@ -98,6 +98,9 @@ static unsigned int idata monTimer1, monTimer2, cmdTimer;
 #define EPP_MAX_TIMEOUT 2000
 // about 300 microseconds
 // This is intentionally much longer than it should ever take because recovery from timeouts is messy.
+
+static unsigned int idata arcomMonTimeouts = 0;
+static unsigned int idata arcomCmdTimeouts = 0;
 
 //! Wait for Data Strobe to go low and detect timeout
 #define EPP_HANDSHAKE(TIMER, TIMEOUT) { \
@@ -386,6 +389,17 @@ int getReservedMsg(CAN_MSG_TYPE *message) {
             message -> data[7] = (unsigned char) initialized;
             message -> len = 8;
             break;
+		case GET_ARCOM_TIMEOUTS:
+			message -> data[0] = (unsigned char) (arcomMonTimeouts >> 8);
+            message -> data[1] = (unsigned char) (arcomMonTimeouts);
+			message -> data[0] = (unsigned char) (arcomCmdTimeouts >> 8);
+            message -> data[1] = (unsigned char) (arcomCmdTimeouts);			
+            message -> data[4] = (unsigned char) 0;
+            message -> data[5] = (unsigned char) 0;
+            message -> data[6] = (unsigned char) 0;
+            message -> data[7] = (unsigned char) 0;
+            message -> len = 4;
+            break;
         default:
             message -> data[0] = (unsigned char) 0;
             message -> data[1] = (unsigned char) 0;
@@ -488,6 +502,9 @@ int controlMsg(CAN_MSG_TYPE *message){
 
 	/* Untrigger interrupt */
 	EPPS_INTERRUPT = 0;
+	if(timeout)
+		arcomCmdTimeouts++;
+
 	return 0;
 }
 
@@ -608,6 +625,9 @@ int monitorMsg(CAN_MSG_TYPE *message) {
     if (ret != 0)
         // Retry once:
         ret = implMonitorSingle(message, TRUE);
+
+	if (ret != 0)
+		arcomMonTimeouts++;
 
 	return ret;
 }
