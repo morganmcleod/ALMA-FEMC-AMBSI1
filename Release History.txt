@@ -1,5 +1,11 @@
 RELEASE/REVISION HISTORY
 
+2024-10-24  001.002.010
+    Add GET_ARCOM_TIMEOUTS monitor request
+    From 1.2.8: 
+    Message Object 15 now checks if NEWDAT is set before processing.
+    This fixes the serial number being sent randomly.
+
 2023-10-16  001.002.009
     Based on 1.2.5 (contains no changes from 1.2.6, 1.2.7, 1.2.8)
     EPP_MAX_TIMEOUT 2000 clock cycles instead of 1000
