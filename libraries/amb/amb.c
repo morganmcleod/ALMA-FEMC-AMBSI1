@@ -569,7 +569,6 @@ int amb_setup_CAN_hw(){
                             * do something wih them  Increment error, because we missed
                             * a message 
                             */
-                            slave_node.num_message_lost++;
                             slave_node.num_errors++;
 
                             if (slave_node.last_slave_error != DUP_SLAVE_ADDR_E) {
