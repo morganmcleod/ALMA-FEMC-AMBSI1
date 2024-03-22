@@ -1,6 +1,7 @@
 RELEASE/REVISION HISTORY
 
-2024-02-24  001.002.010
+2024-03-22  001.002.010
+    Rebuiult after linker mistake found
     Add GET_ARCOM_TIMEOUTS monitor request
     From 1.2.8: 
     Message Object 15 now checks if NEWDAT is set before processing.
